@@ -32,17 +32,13 @@ fn parse_input(path: String) -> LTSI {
 }
 
 fn wrap_number(pos: Int, steps: Int, dir: String) -> #(Int, Int) {
-  case dir {
-    "R" -> {
-      let raw = pos + steps
-      #(raw % d_size, raw / d_size)
-    }
-    _ -> {
-      let assert Ok(lpos) = int.modulo(pos - steps, d_size)
-      let crossings = { steps + { d_size - 1 } - int.max(pos, 1) } / d_size
-      #(lpos, crossings)
-    }
+  let delta = case dir {
+    "R" -> 1
+    _ -> -1
   }
+  let crossings = { { d_size + delta * pos } % d_size + steps } / d_size
+  let n_pos = { pos + delta * steps } % d_size
+  #(n_pos, crossings)
 }
 
 fn solve(con: LTSI, dial: Int, acc: Int, func: fn(Int, Int, Int) -> Int) -> Int {
