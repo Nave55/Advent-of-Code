@@ -30,7 +30,7 @@ fn parse_input(path: String) -> List(Int) {
   })
 }
 
-pub fn digit_len(n: Int) -> Int {
+fn digit_len(n: Int) -> Int {
   do_digit_len(n, 0)
 }
 
@@ -45,14 +45,19 @@ fn do_digit_len(x: Int, acc: Int) -> Int {
   }
 }
 
-pub fn pow10(k: Int) -> Int {
-  do_pow10(k, 1)
-}
-
-fn do_pow10(i: Int, acc: Int) -> Int {
-  case i <= 0 {
-    True -> acc
-    False -> do_pow10(i - 1, acc * 10)
+fn pow10(k: Int) -> Int {
+  case k {
+    0 -> 1
+    1 -> 10
+    2 -> 100
+    3 -> 1000
+    4 -> 10_000
+    5 -> 100_000
+    6 -> 1_000_000
+    7 -> 10_000_000
+    8 -> 100_000_000
+    9 -> 1_000_000_000
+    _ -> 1
   }
 }
 
@@ -67,29 +72,27 @@ fn is_symetrical(n: Int) -> Bool {
   }
 }
 
-pub fn is_repeated(n: Int) -> Bool {
+fn is_repeated(n: Int) -> Bool {
   let len = digit_len(n)
   case len <= 1 {
     True -> False
-    False -> has_repeated_block(n, len, 2)
+    False -> has_repeated_block(n, len, 1)
   }
 }
 
-fn has_repeated_block(n: Int, len: Int, k: Int) -> Bool {
-  case k > len {
+fn has_repeated_block(n: Int, len: Int, block_len: Int) -> Bool {
+  case block_len > len / 2 {
     True -> False
     False ->
-      case len % k {
+      case len % block_len {
         0 -> {
-          let block_len = len / k
+          let k = len / block_len
+          let pow_block = pow10(block_len)
           let block = n / pow10(len - block_len)
-          let candidate = repeat_block(block, pow10(block_len), k, 0)
-          case candidate == n {
-            True -> True
-            False -> has_repeated_block(n, len, k + 1)
-          }
+          let candidate = repeat_block(block, pow_block, k, 0)
+          candidate == n || has_repeated_block(n, len, block_len + 1)
         }
-        _ -> has_repeated_block(n, len, k + 1)
+        _ -> has_repeated_block(n, len, block_len + 1)
       }
   }
 }
