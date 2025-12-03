@@ -49,6 +49,5 @@ fn max_joltage(bank: List(Int), k: Int) -> Int {
 }
 
 fn solver(banks: List(List(Int)), k: Int) -> Int {
-  use x, acc <- list.fold(banks, 0)
-  x + max_joltage(acc, k)
+  list.fold(banks, 0, fn(x, acc) { x + max_joltage(acc, k) })
 }
