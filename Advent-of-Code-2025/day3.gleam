@@ -43,7 +43,8 @@ fn extend(prefixes: List(Int), d: Int) -> List(Int) {
 }
 
 fn max_joltage(bank: List(Int), k: Int) -> Int {
-  list.fold(bank, list.repeat(-1, k), fn(prefixes, d) { extend(prefixes, d) })
+  bank
+  |> list.fold(list.repeat(-1, k), fn(prefixes, d) { extend(prefixes, d) })
   |> list.last
   |> result.unwrap(0)
 }
