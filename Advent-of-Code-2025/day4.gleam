@@ -57,30 +57,30 @@ fn add_tuple(a: TI, b: TI) -> TI {
   #(a.0 + b.0, a.1 + b.1)
 }
 
-fn solution1(pos: STI) -> #(STI, Int) {
-  use acc, val <- set.fold(pos, #(set.new(), 0))
+fn solution1(locs: STI) -> #(STI, Int) {
+  use outer_acc, outer_val <- set.fold(locs, #(set.new(), 0))
   let len =
     list.fold(directions, 0, fn(inner_acc, inner_val) {
-      let tup = add_tuple(val, inner_val)
-      case set.contains(pos, tup) {
+      let tup = add_tuple(outer_val, inner_val)
+      case set.contains(locs, tup) {
         True -> inner_acc + 1
         False -> inner_acc
       }
     })
 
   case len < 4 {
-    True -> #(set.insert(acc.0, val), acc.1 + 1)
-    False -> acc
+    True -> #(set.insert(outer_acc.0, outer_val), outer_acc.1 + 1)
+    False -> outer_acc
   }
 }
 
-fn solution2(pos: STI, acc: Int) -> Int {
-  let to_be_removed = solution1(pos)
+fn solution2(locs: STI, acc: Int) -> Int {
+  let rolls = solution1(locs)
 
-  case to_be_removed.1 == 0 {
+  case rolls.1 == 0 {
     True -> acc
     False ->
-      set.difference(pos, to_be_removed.0)
-      |> solution2(acc + to_be_removed.1)
+      set.difference(locs, rolls.0)
+      |> solution2(acc + rolls.1)
   }
 }
