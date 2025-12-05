@@ -79,8 +79,6 @@ fn solution2(locs: STI, acc: Int) -> Int {
 
   case rolls.1 == 0 {
     True -> acc
-    False ->
-      set.difference(locs, rolls.0)
-      |> solution2(acc + rolls.1)
+    False -> set.difference(locs, rolls.0) |> solution2(acc + rolls.1)
   }
 }
