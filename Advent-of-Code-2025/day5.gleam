@@ -15,7 +15,7 @@ type LTI =
   List(TI)
 
 pub fn main() {
-  let input = parse_input("input/day5-test.txt")
+  let input = parse_input("input/day5.txt")
   let pt1 = solution1(input) |> int.to_string
   let pt2 = solution2(input.0) |> int.to_string
   io.println("Part 1: " <> pt1)
@@ -78,7 +78,6 @@ fn parse_input(path: String) -> #(LTI, LI) {
     |> string.split("\r\n")
     |> list.filter_map(fn(x) { int.parse(x) })
 
-  echo s_parse
   #(f_parse, s_parse)
 }
 
