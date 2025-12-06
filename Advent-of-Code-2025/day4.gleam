@@ -1,6 +1,6 @@
 import gleam/int
 import gleam/io
-import gleam/list
+import gleam/list.{Continue, Stop}
 import gleam/set.{type Set}
 import gleam/string
 import simplifile
@@ -60,11 +60,15 @@ fn add_tuple(a: TI, b: TI) -> TI {
 fn solution1(locs: STI) -> #(STI, Int) {
   use outer_acc, outer_val <- set.fold(locs, #(set.new(), 0))
   let len =
-    list.fold(directions, 0, fn(inner_acc, inner_val) {
+    list.fold_until(directions, 0, fn(inner_acc, inner_val) {
       let tup = add_tuple(outer_val, inner_val)
-      case set.contains(locs, tup) {
-        True -> inner_acc + 1
-        False -> inner_acc
+      case inner_acc < 4 {
+        True ->
+          case set.contains(locs, tup) {
+            True -> Continue(inner_acc + 1)
+            False -> Continue(inner_acc)
+          }
+        False -> Stop(inner_acc)
       }
     })
 
