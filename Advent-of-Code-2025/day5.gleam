@@ -51,7 +51,7 @@ fn merge_ranges(input: LTI) -> LTI {
       let #(last_start, last_end) = last
       let #(cur_start, cur_end) = current
 
-      case int.compare(cur_start, last_end) {
+      case int.compare(cur_start, last_end + 1) {
         Lt | Eq -> [#(last_start, int.max(last_end, cur_end)), ..rest]
         Gt -> [current, last, ..rest]
       }
