@@ -22,13 +22,6 @@ pub fn main() {
   io.println("Part 2: " <> pt2)
 }
 
-fn list_to_tuple2(list: List(Int)) -> Result(TI, String) {
-  case list {
-    [x, y] -> Ok(#(x, y))
-    _ -> Error("List does not have exactly 2 elements")
-  }
-}
-
 fn sort_ranges(xs: LTI) -> LTI {
   use a, b <- list.sort(xs)
   case int.compare(a.0, b.0) {
@@ -55,6 +48,18 @@ fn merge_ranges(input: LTI) -> LTI {
   })
 }
 
+fn parse_range(line: String) -> Result(TI, Nil) {
+  case string.split(line, "-") {
+    [a, b] ->
+      case int.parse(a), int.parse(b) {
+        Ok(x), Ok(y) -> Ok(#(x, y))
+        _, _ -> Error(Nil)
+      }
+
+    _ -> Error(Nil)
+  }
+}
+
 fn parse_input(path: String) -> #(LTI, LI) {
   let assert Ok(con) = simplifile.read(path)
   let assert Ok(#(first, second)) =
@@ -65,12 +70,7 @@ fn parse_input(path: String) -> #(LTI, LI) {
   let f_parse =
     first
     |> string.split("\r\n")
-    |> list.filter_map(fn(x) {
-      x
-      |> string.split("-")
-      |> list.filter_map(fn(i) { int.parse(i) })
-      |> list_to_tuple2
-    })
+    |> list.filter_map(parse_range)
     |> sort_ranges
     |> merge_ranges
 
