@@ -22,6 +22,18 @@ pub fn main() {
   io.println("Part 2: " <> pt2)
 }
 
+fn parse_range(line: String) -> Result(TI, Nil) {
+  case string.split(line, "-") {
+    [a, b] ->
+      case int.parse(a), int.parse(b) {
+        Ok(x), Ok(y) -> Ok(#(x, y))
+        _, _ -> Error(Nil)
+      }
+
+    _ -> Error(Nil)
+  }
+}
+
 fn sort_ranges(xs: LTI) -> LTI {
   use a, b <- list.sort(xs)
   case int.compare(a.0, b.0) {
@@ -46,18 +58,6 @@ fn merge_ranges(input: LTI) -> LTI {
       }
     }
   })
-}
-
-fn parse_range(line: String) -> Result(TI, Nil) {
-  case string.split(line, "-") {
-    [a, b] ->
-      case int.parse(a), int.parse(b) {
-        Ok(x), Ok(y) -> Ok(#(x, y))
-        _, _ -> Error(Nil)
-      }
-
-    _ -> Error(Nil)
-  }
 }
 
 fn parse_input(path: String) -> #(LTI, LI) {
