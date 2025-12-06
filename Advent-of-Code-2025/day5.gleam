@@ -34,8 +34,8 @@ fn parse_range(line: String) -> Result(TI, Nil) {
   }
 }
 
-fn sort_ranges(xs: LTI) -> LTI {
-  use a, b <- list.sort(xs)
+fn sort_ranges(lst: LTI) -> LTI {
+  use a, b <- list.sort(lst)
   case int.compare(a.0, b.0) {
     Eq -> int.compare(a.1, b.1)
     other -> other
