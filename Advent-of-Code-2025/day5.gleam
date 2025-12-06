@@ -15,7 +15,7 @@ type LTI =
   List(TI)
 
 pub fn main() {
-  let input = parse_input("input/day5.txt")
+  let input = parse_input("input/day5-test.txt")
   let pt1 = solution1(input) |> int.to_string
   let pt2 = solution2(input.0) |> int.to_string
   io.println("Part 1: " <> pt1)
@@ -43,21 +43,20 @@ fn sort_ranges(lst: LTI) -> LTI {
 }
 
 fn merge_ranges(input: LTI) -> LTI {
-  list.fold(input, [], fn(acc, current) {
-    case acc {
-      [] -> [current]
+  use acc, current <- list.fold(input, [])
+  case acc {
+    [] -> [current]
 
-      [last, ..rest] -> {
-        let #(last_start, last_end) = last
-        let #(cur_start, cur_end) = current
+    [last, ..rest] -> {
+      let #(last_start, last_end) = last
+      let #(cur_start, cur_end) = current
 
-        case int.compare(cur_start, last_end) {
-          Lt | Eq -> [#(last_start, int.max(last_end, cur_end)), ..rest]
-          Gt -> [current, last, ..rest]
-        }
+      case int.compare(cur_start, last_end) {
+        Lt | Eq -> [#(last_start, int.max(last_end, cur_end)), ..rest]
+        Gt -> [current, last, ..rest]
       }
     }
-  })
+  }
 }
 
 fn parse_input(path: String) -> #(LTI, LI) {
@@ -79,6 +78,7 @@ fn parse_input(path: String) -> #(LTI, LI) {
     |> string.split("\r\n")
     |> list.filter_map(fn(x) { int.parse(x) })
 
+  echo s_parse
   #(f_parse, s_parse)
 }
 
