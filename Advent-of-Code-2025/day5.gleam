@@ -1,88 +1,100 @@
 import gleam/int
 import gleam/io
-import gleam/list.{Continue, Stop}
-import gleam/set.{type Set}
+import gleam/list
+import gleam/order.{Eq, Gt, Lt}
 import gleam/string
 import simplifile
+
+type LI =
+  List(Int)
 
 type TI =
   #(Int, Int)
 
-type STI =
-  Set(TI)
-
-const directions = [
-  #(-1, -1),
-  #(-1, 0),
-  #(-1, 1),
-  #(0, -1),
-  #(0, 1),
-  #(1, -1),
-  #(1, 0),
-  #(1, 1),
-]
+type LTI =
+  List(TI)
 
 pub fn main() {
-  let grid = parse_input("input/day4.txt")
-  let pos = positions(grid)
-  let pt1 = solution1(pos).1 |> int.to_string
-  let pt2 = solution2(pos, 0) |> int.to_string
+  let input = parse_input("input/day5.txt")
+  let pt1 = solution1(input) |> int.to_string
+  let pt2 = solution2(input.0) |> int.to_string
   io.println("Part 1: " <> pt1)
   io.println("Part 2: " <> pt2)
 }
 
-fn parse_input(path: String) -> List(List(String)) {
-  let assert Ok(con) = simplifile.read(path)
-  con
-  |> string.trim_end
-  |> string.split("\n")
-  |> list.map(fn(x) { string.to_graphemes(x) })
+fn parse_range(line: String) -> Result(TI, Nil) {
+  case string.split(line, "-") {
+    [a, b] ->
+      case int.parse(a), int.parse(b) {
+        Ok(x), Ok(y) -> Ok(#(x, y))
+        _, _ -> Error(Nil)
+      }
+
+    _ -> Error(Nil)
+  }
 }
 
-fn positions(grid: List(List(String))) -> STI {
-  list.index_map(grid, fn(row, row_i) {
-    list.index_map(row, fn(value, col_i) {
-      case value {
-        "@" -> Ok(#(row_i, col_i))
-        _ -> Error(Nil)
+fn sort_ranges(lst: LTI) -> LTI {
+  use a, b <- list.sort(lst)
+  case int.compare(a.0, b.0) {
+    Eq -> int.compare(a.1, b.1)
+    other -> other
+  }
+}
+
+fn merge_ranges(input: LTI) -> LTI {
+  list.fold(input, [], fn(acc, current) {
+    case acc {
+      [] -> [current]
+
+      [last, ..rest] -> {
+        let #(last_start, last_end) = last
+        let #(cur_start, cur_end) = current
+
+        case int.compare(cur_start, last_end) {
+          Lt | Eq -> [#(last_start, int.max(last_end, cur_end)), ..rest]
+          Gt -> [current, last, ..rest]
+        }
       }
-    })
-    |> list.filter_map(fn(r) { r })
+    }
   })
-  |> list.flatten
-  |> set.from_list
 }
 
-fn add_tuple(a: TI, b: TI) -> TI {
-  #(a.0 + b.0, a.1 + b.1)
+fn parse_input(path: String) -> #(LTI, LI) {
+  let assert Ok(con) = simplifile.read(path)
+  let assert Ok(#(first, second)) =
+    con
+    |> string.trim_end
+    |> string.split_once("\r\n\r\n")
+
+  let f_parse =
+    first
+    |> string.split("\r\n")
+    |> list.filter_map(parse_range)
+    |> sort_ranges
+    |> merge_ranges
+
+  let s_parse =
+    second
+    |> string.split("\r\n")
+    |> list.filter_map(fn(x) { int.parse(x) })
+
+  #(f_parse, s_parse)
 }
 
-fn solution1(locs: STI) -> #(STI, Int) {
-  use outer_acc, outer_val <- set.fold(locs, #(set.new(), 0))
-  let len =
-    list.fold_until(directions, 0, fn(inner_acc, inner_val) {
-      let tup = add_tuple(outer_val, inner_val)
-      case inner_acc < 4 {
-        True ->
-          case set.contains(locs, tup) {
-            True -> Continue(inner_acc + 1)
-            False -> Continue(inner_acc)
-          }
-        False -> Stop(inner_acc)
-      }
-    })
+fn val_in_range(tup: TI, val: Int) -> Bool {
+  val >= tup.0 && val <= tup.1
+}
 
-  case len < 4 {
-    True -> #(set.insert(outer_acc.0, outer_val), outer_acc.1 + 1)
-    False -> outer_acc
+fn solution1(input: #(LTI, LI)) -> Int {
+  use acc, x <- list.fold(input.1, 0)
+  case list.any(input.0, fn(s) { val_in_range(s, x) }) {
+    True -> acc + 1
+    False -> acc
   }
 }
 
-fn solution2(locs: STI, acc: Int) -> Int {
-  let rolls = solution1(locs)
-
-  case rolls.1 == 0 {
-    True -> acc
-    False -> set.difference(locs, rolls.0) |> solution2(acc + rolls.1)
-  }
+fn solution2(input: LTI) -> Int {
+  use acc, x <- list.fold(input, 0)
+  acc + x.1 - x.0 + 1
 }
