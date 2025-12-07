@@ -48,16 +48,16 @@ fn transpose(lists: List(List(a))) -> List(List(a)) {
   }
 }
 
-fn take_skip(lst: LS, take: LI, acc: LS) -> LS {
+fn take_then_skip(lst: LS, take: LI, acc: LS) -> Result(LS, String) {
   case lst {
-    [] -> list.reverse(acc)
+    [] -> Ok(list.reverse(acc))
     _ ->
       case take {
-        [] -> acc
+        [] -> Error("Nothing in take")
         [first, ..rest_of_take] -> {
           let taken = list.take(lst, first) |> string.join("")
           let rest_of_list = list.drop(lst, first + 1)
-          take_skip(rest_of_list, rest_of_take, [taken, ..acc])
+          take_then_skip(rest_of_list, rest_of_take, [taken, ..acc])
         }
       }
   }
@@ -88,16 +88,14 @@ fn parse_input(path: String) -> #(LLI, LLI, LS) {
     |> list.filter_map(max_width)
 
   let nums_part2 =
-    list.map(body, fn(line) {
-      line
-      |> string.replace(" ", "x")
+    list.filter_map(body, fn(line) {
+      string.replace(line, " ", "x")
       |> string.to_graphemes
-      |> take_skip(take, [])
+      |> take_then_skip(take, [])
     })
     |> transpose
     |> list.map(fn(col) {
-      col
-      |> list.map(string.to_graphemes)
+      list.map(col, string.to_graphemes)
       |> transpose
       |> list.filter_map(fn(graphemes) {
         string.join(graphemes, "")
