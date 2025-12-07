@@ -74,7 +74,7 @@ fn parse_input(path: String) -> #(LLI, LLI, LS) {
     |> string.trim_end
     |> string.split("\r\n")
 
-  // parse operations line into list
+  // split operations into list
   let ops =
     list.last(con)
     |> result.unwrap("")
