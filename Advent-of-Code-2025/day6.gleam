@@ -15,117 +15,105 @@ type LLI =
   List(LI)
 
 pub fn main() {
-  let #(nums_pt1, nums_pt2, ops) = parse_input("input/day6.txt")
-  let pt1 = solver(nums_pt1, ops) |> int.to_string
-  let pt2 = solver(nums_pt2, list.reverse(ops)) |> int.to_string
-  io.println("Part 1: " <> pt1)
-  io.println("Part 2: " <> pt2)
+  test_sample()
+  let #(p1n, p2n, ops) = parse_input("input/day6.txt")
+  io.println("Part 1: " <> int.to_string(solver(p1n, ops)))
+  io.println("Part 2: " <> int.to_string(solver(p2n, list.reverse(ops))))
 }
 
 fn tokens(line: String) -> LS {
-  list.filter(string.split(line, " "), fn(s) { s != "" })
-}
-
-fn body_lines(con: LS) -> LS {
-  list.take(con, list.length(con) - 1)
+  string.split(line, " ") |> list.filter(fn(s) { s != "" })
 }
 
 fn max_width(col: LS) -> Result(Int, Nil) {
-  use r <- result.try(
+  use m <- result.try(
     list.max(col, fn(a, b) { int.compare(string.length(a), string.length(b)) }),
   )
-  Ok(string.length(r))
+  Ok(string.length(m))
 }
 
-// transposes grid from row oriented into column oriented 
-fn transpose(lists: List(List(a))) -> List(List(a)) {
-  case list.any(lists, fn(xs) { xs == [] }) {
+fn transpose(rows: List(List(a))) -> List(List(a)) {
+  case list.any(rows, fn(xs) { xs == [] }) {
     True -> []
-    False -> {
-      let heads = list.filter_map(lists, list.first)
-      let tails = list.map(lists, fn(xs) { list.drop(xs, 1) })
-      [heads, ..transpose(tails)]
+    False -> [
+      list.filter_map(rows, list.first),
+      ..transpose(list.map(rows, fn(xs) { list.drop(xs, 1) }))
+    ]
+  }
+}
+
+fn take_then_skip(xs: LS, widths: LI, acc: LS) -> Result(LS, String) {
+  case xs, widths {
+    [], _ -> Ok(list.reverse(acc))
+    _, [] -> Error("Nothing in take")
+    xs, [w, ..ws] -> {
+      let taken = xs |> list.take(w) |> string.join("")
+      let rest = xs |> list.drop(w + 1)
+      take_then_skip(rest, ws, [taken, ..acc])
     }
   }
 }
 
-// using list of max digits by column find each digit and add to list
-fn take_then_skip(lst: LS, take: LI, acc: LS) -> Result(LS, String) {
-  case lst {
-    [] -> Ok(list.reverse(acc))
-    _ ->
-      case take {
-        [] -> Error("Nothing in take")
-        [first, ..rest_of_take] -> {
-          let taken = list.take(lst, first) |> string.join("")
-          let rest_of_list = list.drop(lst, first + 1)
-          take_then_skip(rest_of_list, rest_of_take, [taken, ..acc])
-        }
-      }
-  }
-}
-
-// worst parsing solution???????
 fn parse_input(path: String) -> #(LLI, LLI, LS) {
-  // read file and split by new lines
   let con =
     simplifile.read(path)
     |> result.unwrap("")
     |> string.trim_end
     |> string.split("\r\n")
 
-  // split operations into list
   let ops =
     list.last(con)
     |> result.unwrap("")
     |> string.replace(" ", "")
     |> string.to_graphemes
 
-  // get all lines except operations
-  let body = body_lines(con)
+  let body = list.take(con, list.length(con) - 1)
 
-  // creates list of ints column wise
-  let nums_part1 =
-    list.map(body, fn(line) { tokens(line) |> list.filter_map(int.parse) })
+  let widths =
+    body |> list.map(tokens) |> transpose |> list.filter_map(max_width)
+
+  let nums_pt1 =
+    body
+    |> list.map(fn(l) { tokens(l) |> list.filter_map(int.parse) })
     |> transpose
 
-  // create list of max len of each digit by column
-  let take =
-    list.map(body, tokens)
-    |> transpose
-    |> list.filter_map(max_width)
-
-  // creates list going right to left by each individual column
-  let nums_part2 =
-    list.filter_map(body, fn(line) {
-      string.replace(line, " ", "x")
+  let nums_pt2 =
+    body
+    |> list.filter_map(fn(l) {
+      l
+      |> string.replace(" ", "x")
       |> string.to_graphemes
-      |> take_then_skip(take, [])
+      |> take_then_skip(widths, [])
     })
     |> transpose
     |> list.map(fn(col) {
-      list.map(col, string.to_graphemes)
+      col
+      |> list.map(string.to_graphemes)
       |> transpose
-      |> list.filter_map(fn(graphemes) {
-        string.join(graphemes, "")
-        |> string.replace("x", "")
-        |> int.parse
+      |> list.filter_map(fn(g) {
+        g |> string.join("") |> string.replace("x", "") |> int.parse
       })
     })
     |> list.reverse
 
-  #(nums_part1, nums_part2, ops)
+  #(nums_pt1, nums_pt2, ops)
 }
 
-// solves each problem by zipping nums and ops then running a nested fold
 fn solver(nums: LLI, ops: LS) -> Int {
-  let zipped = list.zip(nums, ops)
-  use outer_acc, outer_val <- list.fold(zipped, 0)
-  let #(nums, op) = outer_val
-  let inner = case op {
-    "*" -> list.fold(nums, 1, fn(acc, n) { acc * n })
-    _ -> list.fold(nums, 0, fn(acc, n) { acc + n })
-  }
+  nums
+  |> list.zip(ops)
+  |> list.fold(0, fn(acc, val) {
+    let #(ns, op) = val
+    let inner = case op {
+      "*" -> list.fold(ns, 1, fn(a, n) { a * n })
+      _ -> list.fold(ns, 0, fn(a, n) { a + n })
+    }
+    acc + inner
+  })
+}
 
-  outer_acc + inner
+fn test_sample() {
+  let #(p1n, p2n, ops) = parse_input("input/day6-test.txt")
+  assert solver(p1n, ops) == 4_277_556
+  assert solver(p2n, list.reverse(ops)) == 3_263_827
 }
