@@ -37,6 +37,7 @@ fn max_width(col: LS) -> Result(Int, Nil) {
   Ok(string.length(r))
 }
 
+// transposes grid from row oriented into column oriented 
 fn transpose(lists: List(List(a))) -> List(List(a)) {
   case list.any(lists, fn(xs) { xs == [] }) {
     True -> []
@@ -48,6 +49,7 @@ fn transpose(lists: List(List(a))) -> List(List(a)) {
   }
 }
 
+// using list of max digits by column find each digit and add to list
 fn take_then_skip(lst: LS, take: LI, acc: LS) -> Result(LS, String) {
   case lst {
     [] -> Ok(list.reverse(acc))
@@ -63,30 +65,37 @@ fn take_then_skip(lst: LS, take: LI, acc: LS) -> Result(LS, String) {
   }
 }
 
+// worst parsing solution???????
 fn parse_input(path: String) -> #(LLI, LLI, LS) {
+  // read file and split by new lines
   let con =
     simplifile.read(path)
     |> result.unwrap("")
     |> string.trim_end
     |> string.split("\r\n")
 
+  // parse operations line into list
   let ops =
     list.last(con)
     |> result.unwrap("")
     |> string.replace(" ", "")
     |> string.to_graphemes
 
+  // get all lines except operations
   let body = body_lines(con)
 
+  // creates list of ints column wise
   let nums_part1 =
     list.map(body, fn(line) { tokens(line) |> list.filter_map(int.parse) })
     |> transpose
 
+  // create list of max len of each digit by column
   let take =
     list.map(body, tokens)
     |> transpose
     |> list.filter_map(max_width)
 
+  // creates list going right to left by each individual column
   let nums_part2 =
     list.filter_map(body, fn(line) {
       string.replace(line, " ", "x")
@@ -108,6 +117,7 @@ fn parse_input(path: String) -> #(LLI, LLI, LS) {
   #(nums_part1, nums_part2, ops)
 }
 
+// solves each problem by zipping nums and ops then running a nested fold
 fn solver(nums: LLI, ops: LS) -> Int {
   let zipped = list.zip(nums, ops)
   use outer_acc, outer_val <- list.fold(zipped, 0)
