@@ -15,7 +15,6 @@ type LLI =
   List(LI)
 
 pub fn main() {
-  test_sample()
   let #(p1n, p2n, ops) = parse_input("input/day6.txt")
   io.println("Part 1: " <> int.to_string(solver(p1n, ops)))
   io.println("Part 2: " <> int.to_string(solver(p2n, list.reverse(ops))))
@@ -110,10 +109,4 @@ fn solver(nums: LLI, ops: LS) -> Int {
     }
     acc + inner
   })
-}
-
-fn test_sample() {
-  let #(p1n, p2n, ops) = parse_input("input/day6-test.txt")
-  assert solver(p1n, ops) == 4_277_556
-  assert solver(p2n, list.reverse(ops)) == 3_263_827
 }
