@@ -31,16 +31,6 @@ fn max_width(col: LS) -> Result(Int, Nil) {
   Ok(string.length(m))
 }
 
-fn transpose(rows: List(List(a))) -> List(List(a)) {
-  case list.any(rows, fn(xs) { xs == [] }) {
-    True -> []
-    False -> [
-      list.filter_map(rows, list.first),
-      ..transpose(list.map(rows, fn(xs) { list.drop(xs, 1) }))
-    ]
-  }
-}
-
 fn take_then_skip(xs: LS, widths: LI, acc: LS) -> Result(LS, String) {
   case xs, widths {
     [], _ -> Ok(list.reverse(acc))
@@ -69,12 +59,12 @@ fn parse_input(path: String) -> #(LLI, LLI, LS) {
   let body = list.take(con, list.length(con) - 1)
 
   let widths =
-    body |> list.map(tokens) |> transpose |> list.filter_map(max_width)
+    body |> list.map(tokens) |> list.transpose |> list.filter_map(max_width)
 
   let nums_pt1 =
     body
     |> list.map(fn(l) { tokens(l) |> list.filter_map(int.parse) })
-    |> transpose
+    |> list.transpose
 
   let nums_pt2 =
     body
@@ -84,11 +74,11 @@ fn parse_input(path: String) -> #(LLI, LLI, LS) {
       |> string.to_graphemes
       |> take_then_skip(widths, [])
     })
-    |> transpose
+    |> list.transpose
     |> list.map(fn(col) {
       col
       |> list.map(string.to_graphemes)
-      |> transpose
+      |> list.transpose
       |> list.filter_map(fn(g) {
         g |> string.join("") |> string.replace("x", "") |> int.parse
       })
