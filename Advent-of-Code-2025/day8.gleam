@@ -2,7 +2,7 @@ import gleam/float
 import gleam/int
 import gleam/io
 import gleam/list.{Continue, Stop}
-import gleam/result
+import gleam/option.{type Option, None, Some}
 import gleam/set.{type Set}
 import gleam/string
 import simplifile
@@ -29,7 +29,8 @@ pub fn euclid_distance(a: Coord, b: Coord) -> Float {
   let dx = a.x - b.x
   let dy = a.y - b.y
   let dz = a.z - b.z
-  int.square_root(dx * dx + dy * dy + dz * dz) |> result.unwrap(0.0)
+  let assert Ok(dist) = int.square_root(dx * dx + dy * dy + dz * dz)
+  dist
 }
 
 pub fn parse_input(path: String) -> List(Circuit) {
@@ -49,9 +50,9 @@ pub fn parse_input(path: String) -> List(Circuit) {
   |> list.sort(fn(a, b) { float.compare(a.len, b.len) })
 }
 
-fn extract_set(item: Coord, groups: List(SC)) -> #(Result(SC, Nil), List(SC)) {
+fn extract_set(item: Coord, groups: List(SC)) -> #(Option(SC), List(SC)) {
   let #(matches, rest) = list.partition(groups, fn(s) { set.contains(s, item) })
-  #(list.first(matches), rest)
+  #(list.first(matches) |> option.from_result, rest)
 }
 
 fn merge_coords(circ: Circuit, circuits: List(SC)) -> List(SC) {
@@ -59,10 +60,10 @@ fn merge_coords(circ: Circuit, circuits: List(SC)) -> List(SC) {
   let #(circ2, rest2) = extract_set(circ.b, rest1)
 
   case circ1, circ2 {
-    Error(_), Error(_) -> [set.from_list([circ.a, circ.b]), ..rest2]
-    Ok(c), Error(_) -> [set.insert(c, circ.b), ..rest2]
-    Error(_), Ok(c) -> [set.insert(c, circ.a), ..rest2]
-    Ok(c1), Ok(c2) -> [set.union(c1, c2), ..rest2]
+    None, None -> [set.from_list([circ.a, circ.b]), ..rest2]
+    Some(c1), None -> [set.insert(c1, circ.b), ..rest2]
+    None, Some(c2) -> [set.insert(c2, circ.a), ..rest2]
+    Some(c1), Some(c2) -> [set.union(c1, c2), ..rest2]
   }
 }
 
