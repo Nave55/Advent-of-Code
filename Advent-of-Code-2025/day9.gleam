@@ -10,7 +10,7 @@ pub type PDict =
   Dict(Int, Point)
 
 pub type Data {
-  Data(points_dict: PDict, point_count: Int, pivot_index: Int)
+  Data(dict: PDict, count: Int, pivot: Int)
 }
 
 pub type Point {
@@ -23,11 +23,10 @@ type ScanState {
 
 pub fn main() {
   let #(data, points_list) = parse_input("input/day9.txt")
-  let remaining_forward = data.point_count - data.pivot_index - 1
-  let remaining_backward = data.pivot_index + 1
-  let #(scan_a, _) = scan_from(data, data.pivot_index, 1, remaining_forward)
-  let #(scan_b, _) =
-    scan_from(data, data.pivot_index + 1, -1, remaining_backward)
+  let remaining_forward = data.count - data.pivot - 1
+  let remaining_backward = data.pivot + 1
+  let #(scan_a, _) = scan_from(data, data.pivot, 1, remaining_forward)
+  let #(scan_b, _) = scan_from(data, data.pivot + 1, -1, remaining_backward)
 
   io.println("Part 1: " <> max_area_pairs(points_list) |> int.to_string)
   io.println("Part 2: " <> int.max(scan_a, scan_b) |> int.to_string)
@@ -194,23 +193,15 @@ fn scan_loop(
 }
 
 pub fn scan_from(data: Data, start: Int, k_dir: Int, rem: Int) -> #(Int, Int) {
-  let p1 = point_at(data.points_dict, start)
+  let p1 = point_at(data.dict, start)
   let x1 = p1.x
   let y1 = p1.y
   let k_start = case k_dir > 0 {
     True -> 0
-    False -> data.point_count - 1
+    False -> data.count - 1
   }
   let init_state = ScanState(start, k_start, 0, 0, start)
   let final_state =
-    scan_loop(
-      data.points_dict,
-      init_state,
-      rem,
-      x1,
-      y1,
-      k_dir,
-      data.point_count,
-    )
+    scan_loop(data.dict, init_state, rem, x1, y1, k_dir, data.count)
   #(final_state.best_area, final_state.best_j)
 }
