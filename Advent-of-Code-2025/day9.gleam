@@ -5,8 +5,8 @@ import gleam/result
 import gleam/string
 import simplifile
 
-pub type Day9Data {
-  Day9Data(nums: List(Int), len: Int, pos: Int)
+pub type Data {
+  Data(nums: List(Int), len: Int, pos: Int)
 }
 
 pub type Point {
@@ -28,7 +28,7 @@ fn get(nums: List(Int), i: Int) -> Int {
   }
 }
 
-pub fn parse_input(contents: String) -> #(Day9Data, List(Point)) {
+pub fn parse_input(contents: String) -> #(Data, List(Point)) {
   let lines =
     simplifile.read(contents)
     |> result.unwrap("")
@@ -59,7 +59,7 @@ pub fn parse_input(contents: String) -> #(Day9Data, List(Point)) {
       }
     })
 
-  #(Day9Data(nums, len, pos), lst)
+  #(Data(nums, len, pos), lst)
 }
 
 pub fn area(a: Point, b: Point) {
@@ -153,12 +153,7 @@ fn loop(
   }
 }
 
-pub fn day9_scan_from(
-  data: Day9Data,
-  i: Int,
-  kdir: Int,
-  limit: Int,
-) -> #(Int, Int) {
+pub fn day9_scan_from(data: Data, i: Int, kdir: Int, limit: Int) -> #(Int, Int) {
   let x1 = get(data.nums, i * 2)
   let y1 = get(data.nums, i * 2 + 1)
   let kstart = case kdir > 0 {
