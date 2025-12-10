@@ -19,7 +19,6 @@ pub type Point {
 
 pub fn main() {
   let #(data, points_list) = parse_input("input/day9.txt")
-
   let remaining_forward = data.point_count - data.pivot_index - 1
   let remaining_backward = data.pivot_index + 1
   let #(scan_a, _) = scan_from(data, data.pivot_index, 1, remaining_forward)
@@ -31,10 +30,7 @@ pub fn main() {
 }
 
 fn get_dict(points_dict: PDict, i: Int) -> Point {
-  case dict.get(points_dict, i) {
-    Ok(p) -> p
-    Error(_) -> panic as "index out of bounds"
-  }
+  dict.get(points_dict, i) |> result.unwrap(Point(0, 0))
 }
 
 pub fn parse_input(contents: String) -> #(Data, List(Point)) {
