@@ -89,7 +89,7 @@ fn loop(
   nums: List(Int),
   j: Int,
   k: Int,
-  maxx: Int,
+  max: Int,
   ret: Int,
   best: Int,
   remaining: Int,
@@ -104,8 +104,8 @@ fn loop(
       let x2 = get(nums, j2 * 2)
       let y2 = get(nums, j2 * 2 + 1)
 
-      case x2 < maxx {
-        True -> loop(nums, j2, k, maxx, ret, best, remaining - 1, x1, y1, kdir)
+      case x2 < max {
+        True -> loop(nums, j2, k, max, ret, best, remaining - 1, x1, y1, kdir)
         False -> {
           let maxx2 = x2
           let k2 = advance(nums, k, kdir, y2)
