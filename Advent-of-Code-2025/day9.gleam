@@ -54,7 +54,6 @@ pub fn parse_input(contents: String) -> #(Data, List(Point)) {
     })
 
   let points_list = list.map(parsed, fn(v) { Point(v.0, v.1) })
-
   let #(_, points_dict) =
     list.fold(points_list, #(0, dict.new()), fn(acc, p) {
       let #(i, d) = acc
@@ -62,7 +61,6 @@ pub fn parse_input(contents: String) -> #(Data, List(Point)) {
     })
 
   let point_count = list.length(points_list)
-
   let #(pivot_index, _) =
     list.fold(list.range(1, point_count - 1), #(0, 0), fn(acc, i) {
       let #(best_i, max_dx) = acc
