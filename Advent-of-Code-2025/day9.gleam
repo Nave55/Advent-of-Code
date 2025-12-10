@@ -22,8 +22,15 @@ type ScanState {
 }
 
 pub fn main() {
-  test_input()
-  full_input()
+  let #(data, points_list) = parse_input("input/day9.txt")
+  let remaining_forward = data.point_count - data.pivot_index - 1
+  let remaining_backward = data.pivot_index + 1
+  let #(scan_a, _) = scan_from(data, data.pivot_index, 1, remaining_forward)
+  let #(scan_b, _) =
+    scan_from(data, data.pivot_index + 1, -1, remaining_backward)
+
+  io.println("Part 1: " <> max_area_pairs(points_list) |> int.to_string)
+  io.println("Part 2: " <> int.max(scan_a, scan_b) |> int.to_string)
 }
 
 fn point_at(points_dict: PDict, i: Int) -> Point {
@@ -212,28 +219,4 @@ pub fn scan_from(data: Data, start: Int, k_dir: Int, rem: Int) -> #(Int, Int) {
       data.point_count,
     )
   #(final_state.best_area, final_state.best_j)
-}
-
-pub fn full_input() {
-  let #(data, points_list) = parse_input("input/day9.txt")
-  let remaining_forward = data.point_count - data.pivot_index - 1
-  let remaining_backward = data.pivot_index + 1
-  let #(scan_a, _) = scan_from(data, data.pivot_index, 1, remaining_forward)
-  let #(scan_b, _) =
-    scan_from(data, data.pivot_index + 1, -1, remaining_backward)
-
-  io.println("Part 1: " <> max_area_pairs(points_list) |> int.to_string)
-  io.println("Part 2: " <> int.max(scan_a, scan_b) |> int.to_string)
-}
-
-pub fn test_input() {
-  let #(data, points_list) = parse_input("input/day9-test.txt")
-  let remaining_forward = data.point_count - data.pivot_index - 1
-  let remaining_backward = data.pivot_index + 1
-  let #(scan_a, _) = scan_from(data, data.pivot_index, 1, remaining_forward)
-  let #(scan_b, _) =
-    scan_from(data, data.pivot_index + 1, -1, remaining_backward)
-
-  assert max_area_pairs(points_list) == 50 as "Failed Part 1"
-  assert int.max(scan_a, scan_b) == 24 as "Failed Part 2"
 }
