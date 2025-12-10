@@ -77,9 +77,7 @@ pub fn parse_input(contents: String) -> #(Data, List(Point)) {
 }
 
 pub fn rect_area(a: Point, b: Point) {
-  let width = int.absolute_value(a.x - b.x) + 1
-  let height = int.absolute_value(a.y - b.y) + 1
-  width * height
+  { int.absolute_value(a.x - b.x) + 1 } * { int.absolute_value(a.y - b.y) + 1 }
 }
 
 pub fn max_area_pairs(points: List(Point)) -> Int {
@@ -109,10 +107,6 @@ fn advance_k(
       }
     }
   }
-}
-
-fn compute_area(x1: Int, y1: Int, x2: Int, y2: Int) -> Int {
-  { int.absolute_value(x2 - x1) + 1 } * { int.absolute_value(y2 - y1) + 1 }
 }
 
 fn scan_loop(
@@ -160,7 +154,7 @@ fn scan_loop(
               case pk.x < x1 {
                 True -> state
                 False -> {
-                  let area = compute_area(x1, y1, x2, y2)
+                  let area = rect_area(Point(x1, y1), Point(x2, y2))
                   case area > state.best_area {
                     True ->
                       scan_loop(
