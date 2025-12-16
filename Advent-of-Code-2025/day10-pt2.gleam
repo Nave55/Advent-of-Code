@@ -16,32 +16,169 @@ pub type LB =
 pub type Rat =
   #(Int, Int)
 
+pub type LR =
+  List(Rat)
+
+pub type LLR =
+  List(LR)
+
+pub type TII =
+  #(Int, Int, Int)
+
 pub type Node {
   Node(buttons: LLI, target: LI)
 }
 
-// numerator, denominator (normalized, denom > 0)
-
-// ---------- integer helpers ----------
-pub fn lcm(a: Int, b: Int) -> Int {
+// -------- Helpers --------
+fn lcm(a: Int, b: Int) -> Int {
   case a == 0 || b == 0 {
     True -> 0
     False -> int.absolute_value(a * b) / gcd(a, b)
   }
 }
 
-pub fn rat_to_nd(r: Rat) -> #(Int, Int) {
-  let #(n, d) = r
-  #(n, d)
+fn gcd(a: Int, b: Int) -> Int {
+  let a = int.absolute_value(a)
+  let b = int.absolute_value(b)
+  case b == 0 {
+    True -> a
+    False -> gcd(b, a % b)
+  }
 }
 
-// ---------- build congruences from reduced matrix ----------
-// Each row yields a modular constraint for integrality of the dependent variable.
-// Returned list: #(modulus, coeffs per free index (in free_ixs order), rhs_modulus)
-pub fn build_congruences(
+fn pos_mod(x: Int, m: Int) -> Int {
+  case m == 0 {
+    True -> 0
+    False -> {
+      let r = x % m
+      { { r + m } % m }
+    }
+  }
+}
+
+fn ceil_abs(n: Int, d: Int) -> Int {
+  let an = int.absolute_value(n)
+  let ad = int.absolute_value(d)
+  case ad == 0 {
+    True -> 0
+    False -> { an + ad - 1 } / ad
+  }
+}
+
+fn min_int(a: Int, b: Int) -> Int {
+  case a < b {
+    True -> a
+    False -> b
+  }
+}
+
+fn max_int(a: Int, b: Int) -> Int {
+  case a > b {
+    True -> a
+    False -> b
+  }
+}
+
+// extract free indices from LB
+fn free_indices(flags: LB) -> LI {
+  list.index_fold(flags, [], fn(acc, b, i) {
+    case b {
+      True -> list.append(acc, [i])
+      False -> acc
+    }
+  })
+}
+
+fn normalize_rat(r: Rat) -> Rat {
+  let #(n, d) = r
+  case d == 0 {
+    True -> #(0, 1)
+    False -> {
+      let g = gcd(n, d)
+      let sign = case d < 0 {
+        True -> -1
+        False -> 1
+      }
+      #(sign * { n / g }, int.absolute_value(d / g))
+    }
+  }
+}
+
+fn rat_from_int(i: Int) -> Rat {
+  normalize_rat(#(i, 1))
+}
+
+fn rat_zero() -> Rat {
+  #(0, 1)
+}
+
+fn rat_add(a: Rat, b: Rat) -> Rat {
+  let #(an, ad) = a
+  let #(bn, bd) = b
+  normalize_rat(#(an * bd + bn * ad, ad * bd))
+}
+
+fn rat_sub(a: Rat, b: Rat) -> Rat {
+  let #(an, ad) = a
+  let #(bn, bd) = b
+  normalize_rat(#(an * bd - bn * ad, ad * bd))
+}
+
+fn rat_mul(a: Rat, b: Rat) -> Rat {
+  let #(an, ad) = a
+  let #(bn, bd) = b
+  normalize_rat(#(an * bn, ad * bd))
+}
+
+fn rat_div(a: Rat, b: Rat) -> Rat {
+  let #(an, ad) = a
+  let #(bn, bd) = b
+  case bn == 0 {
+    True -> #(0, 1)
+    False -> normalize_rat(#(an * bd, ad * bn))
+  }
+}
+
+fn rat_is_zero(a: Rat) -> Bool {
+  let #(n, _) = a
+  n == 0
+}
+
+fn rat_is_integer(a: Rat) -> Bool {
+  let #(n, d) = a
+  d != 0 && n % d == 0
+}
+
+fn rat_to_int(a: Rat) -> Int {
+  let #(n, d) = a
+  n / d
+}
+
+fn nth_or(xs: List(a), i: Int, default: a) -> a {
+  case list.drop(xs, i) {
+    [] -> default
+    [x, ..] -> x
+  }
+}
+
+// safe matrix access helper
+fn get_rat(mat: LLR, r: Int, c: Int) -> Rat {
+  nth_or(nth_or(mat, r, []), c, rat_zero())
+}
+
+fn replace_elem(xs: List(a), i: Int, v: a) -> List(a) {
+  list.index_map(xs, fn(x, idx) {
+    case idx == i {
+      True -> v
+      False -> x
+    }
+  })
+}
+
+fn build_congruences(
   mat: List(List(Rat)),
   free_ixs: LI,
-) -> List(#(Int, List(#(Int, Int)), Int)) {
+) -> List(#(Int, List(Rat), Int)) {
   let height = list.length(mat)
   let width = case height == 0 {
     True -> 0
@@ -50,10 +187,8 @@ pub fn build_congruences(
 
   list.index_map(mat, fn(row, _) {
     let denoms =
-      list.index_map(free_ixs, fn(fcol, _) {
-        rat_to_nd(nth_or(row, fcol, rat_zero())).1
-      })
-      |> list.append([rat_to_nd(nth_or(row, width - 1, rat_zero())).1])
+      list.index_map(free_ixs, fn(fcol, _) { nth_or(row, fcol, rat_zero()).1 })
+      |> list.append([nth_or(row, width - 1, rat_zero()).1])
 
     let modulus =
       list.fold(denoms, 1, fn(acc, d) {
@@ -68,13 +203,13 @@ pub fn build_congruences(
       False -> {
         let coeffs =
           list.index_map(free_ixs, fn(fcol, k) {
-            let #(an, ad) = rat_to_nd(nth_or(row, fcol, rat_zero()))
+            let #(an, ad) = nth_or(row, fcol, rat_zero())
             let coeff = an * { modulus / ad }
             let coeff_modulus = { { coeff % modulus } + modulus } % modulus
             #(k, coeff_modulus)
           })
 
-        let #(rn, rd) = rat_to_nd(nth_or(row, width - 1, rat_zero()))
+        let #(rn, rd) = nth_or(row, width - 1, rat_zero())
         let rhs_int = rn * { modulus / rd }
         let rhs_modulus = { { rhs_int % modulus } + modulus } % modulus
 
@@ -93,147 +228,9 @@ pub fn build_congruences(
   })
 }
 
-// ---------- check congruences for a partial assignment ----------
-// partial values correspond to free_ixs order: index 0..len(partial)-1
-pub fn congruences_hold_partial(
-  congrs: List(#(Int, List(#(Int, Int)), Int)),
-  partial: LI,
-) -> Bool {
-  list.all(congrs, fn(c) {
-    let modulus = c.0
-    let coeffs = c.1
-    let rhs_modulus = c.2
-
-    let assigned_sum =
-      list.fold(coeffs, 0, fn(acc, p) {
-        let idx = p.0
-        let coeff_modulus = p.1
-        case idx < list.length(partial) {
-          True -> {
-            let v = nth_or(partial, idx, 0)
-            let contrib = { coeff_modulus * { v % modulus } } % modulus
-            { { acc + contrib } % modulus + modulus } % modulus
-          }
-          False -> acc
-        }
-      })
-
-    let all_assigned = list.all(coeffs, fn(p) { p.0 < list.length(partial) })
-    case all_assigned {
-      True -> { { assigned_sum % modulus } + modulus } % modulus == rhs_modulus
-      False -> True
-    }
-  })
-}
-
-// ---------- Rational helpers ----------
-pub fn gcd(a: Int, b: Int) -> Int {
-  let a = int.absolute_value(a)
-  let b = int.absolute_value(b)
-  case b == 0 {
-    True -> a
-    False -> gcd(b, a % b)
-  }
-}
-
-pub fn normalize_rat(r: Rat) -> Rat {
-  let #(n, d) = r
-  case d == 0 {
-    True -> #(0, 1)
-    False -> {
-      let g = gcd(n, d)
-      let sign = case d < 0 {
-        True -> -1
-        False -> 1
-      }
-      #(sign * { n / g }, int.absolute_value(d / g))
-    }
-  }
-}
-
-pub fn rat_from_int(i: Int) -> Rat {
-  normalize_rat(#(i, 1))
-}
-
-pub fn rat_zero() -> Rat {
-  #(0, 1)
-}
-
-pub fn rat_add(a: Rat, b: Rat) -> Rat {
-  let #(an, ad) = a
-  let #(bn, bd) = b
-  normalize_rat(#(an * bd + bn * ad, ad * bd))
-}
-
-pub fn rat_sub(a: Rat, b: Rat) -> Rat {
-  let #(an, ad) = a
-  let #(bn, bd) = b
-  normalize_rat(#(an * bd - bn * ad, ad * bd))
-}
-
-pub fn rat_mul(a: Rat, b: Rat) -> Rat {
-  let #(an, ad) = a
-  let #(bn, bd) = b
-  normalize_rat(#(an * bn, ad * bd))
-}
-
-pub fn rat_div(a: Rat, b: Rat) -> Rat {
-  let #(an, ad) = a
-  let #(bn, bd) = b
-  case bn == 0 {
-    True -> #(0, 1)
-    False -> normalize_rat(#(an * bd, ad * bn))
-  }
-}
-
-pub fn rat_is_zero(a: Rat) -> Bool {
-  let #(n, _) = a
-  n == 0
-}
-
-pub fn rat_is_integer(a: Rat) -> Bool {
-  let #(n, d) = a
-  d != 0 && n % d == 0
-}
-
-pub fn rat_to_int(a: Rat) -> Int {
-  let #(n, d) = a
-  n / d
-}
-
-// ---------- List helpers ----------
-pub fn nth_or(xs: List(a), i: Int, default: a) -> a {
-  case list.drop(xs, i) {
-    [] -> default
-    [x, ..] -> x
-  }
-}
-
-pub fn replace_elem(xs: List(a), i: Int, v: a) -> List(a) {
-  list.index_map(xs, fn(x, idx) {
-    case idx == i {
-      True -> v
-      False -> x
-    }
-  })
-}
-
-pub fn replace_row(matrix: LLI, r: Int, row: LI) -> LLI {
-  list.index_map(matrix, fn(old, i) {
-    case i == r {
-      True -> row
-      False -> old
-    }
-  })
-}
-
 // ---------- Matrix builder (Rational) ----------
 
-pub fn replace_row_rat(
-  matrix: List(List(Rat)),
-  r: Int,
-  row: List(Rat),
-) -> List(List(Rat)) {
+fn replace_row_rat(matrix: LLR, r: Int, row: LR) -> LLR {
   list.index_map(matrix, fn(old, i) {
     case i == r {
       True -> row
@@ -242,7 +239,7 @@ pub fn replace_row_rat(
   })
 }
 
-pub fn build_matrix_rat(target: LI, buttons: LLI) -> List(List(Rat)) {
+fn build_matrix_rat(target: LI, buttons: LLI) -> LLR {
   let height = list.length(target)
   let width = list.length(buttons) + 1
   let zeros_row = list.repeat(rat_zero(), width)
@@ -268,7 +265,7 @@ pub fn build_matrix_rat(target: LI, buttons: LLI) -> List(List(Rat)) {
 }
 
 // ---------- Gaussian elimination (exact rationals) ----------
-pub fn leading_col_rat(row: List(Rat)) -> Int {
+fn leading_col_rat(row: LR) -> Int {
   let width = list.length(row)
   list.range(0, width - 2)
   |> list.fold(-1, fn(acc, j) {
@@ -283,11 +280,7 @@ pub fn leading_col_rat(row: List(Rat)) -> Int {
   })
 }
 
-pub fn normalize_pivot_row(
-  mat: List(List(Rat)),
-  row: Int,
-  col: Int,
-) -> List(List(Rat)) {
+fn normalize_pivot_row(mat: LLR, row: Int, col: Int) -> LLR {
   let row_r = nth_or(mat, row, [])
   let pivot = nth_or(row_r, col, rat_zero())
   case rat_is_zero(pivot) {
@@ -299,13 +292,7 @@ pub fn normalize_pivot_row(
   }
 }
 
-pub fn reduce_row_rat(
-  mat: List(List(Rat)),
-  height: Int,
-  width: Int,
-  row: Int,
-  col: Int,
-) -> List(List(Rat)) {
+fn reduce_row_rat(mat: LLR, height: Int, width: Int, row: Int, col: Int) -> LLR {
   let mat1 = normalize_pivot_row(mat, row, col)
   let norm_row = nth_or(mat1, row, [])
   list.index_map(list.range(0, height - 1), fn(_, i) {
@@ -325,24 +312,16 @@ pub fn reduce_row_rat(
   })
 }
 
-pub fn zero_row_rat(row: List(Rat), width: Int) -> Bool {
+fn zero_row_rat(row: LR, width: Int) -> Bool {
   list.range(0, width - 2)
   |> list.all(fn(j) { rat_is_zero(nth_or(row, j, rat_zero())) })
 }
 
-pub fn remove_zero_rows_rat(
-  matrix: List(List(Rat)),
-  width: Int,
-) -> List(List(Rat)) {
+fn remove_zero_rows_rat(matrix: LLR, width: Int) -> LLR {
   list.filter(matrix, fn(row) { !zero_row_rat(row, width) })
 }
 
-pub fn row_max_rat(
-  matrix: List(List(Rat)),
-  start_row: Int,
-  col: Int,
-  height: Int,
-) -> Int {
+fn row_max_rat(matrix: LLR, start_row: Int, col: Int, height: Int) -> Int {
   list.range(start_row, height - 1)
   |> list.fold(#(-1, rat_zero()), fn(acc, i) {
     let val = nth_or(nth_or(matrix, i, []), col, rat_zero())
@@ -361,15 +340,15 @@ pub fn row_max_rat(
   |> fn(x) { x.0 }
 }
 
-pub fn gauss_loop_rat(
-  m: List(List(Rat)),
+fn gauss_loop_rat(
+  m: LLR,
   f: LB,
   row: Int,
   col: Int,
-  free_count: Int,
+  free: Int,
   height: Int,
   width: Int,
-) -> #(List(List(Rat)), LB, Int, Int) {
+) -> #(LLR, LB, Int, Int) {
   case row < height && col < width - 1 {
     True -> {
       let rm = row_max_rat(m, row, col, height)
@@ -380,7 +359,7 @@ pub fn gauss_loop_rat(
             replace_elem(f, col, True),
             row,
             col + 1,
-            free_count + 1,
+            free + 1,
             height,
             width,
           )
@@ -393,28 +372,20 @@ pub fn gauss_loop_rat(
               nth_or(m, row, []),
             )
           let reduced = reduce_row_rat(swapped, height, width, row, col)
-          gauss_loop_rat(
-            reduced,
-            f,
-            row + 1,
-            col + 1,
-            free_count,
-            height,
-            width,
-          )
+          gauss_loop_rat(reduced, f, row + 1, col + 1, free, height, width)
         }
       }
     }
-    False -> #(m, f, free_count, col)
+    False -> #(m, f, free, col)
   }
 }
 
-pub fn gauss_eliminate_rat(
-  matrix: List(List(Rat)),
+fn gauss_eliminate_rat(
+  matrix: LLR,
   free_cols: LB,
   height: Int,
   width: Int,
-) -> #(List(List(Rat)), LB, Int) {
+) -> #(LLR, LB, Int) {
   let #(m1, f1, _, col_after) =
     gauss_loop_rat(matrix, free_cols, 0, 0, 0, height, width)
   let f2 =
@@ -432,7 +403,7 @@ pub fn gauss_eliminate_rat(
 }
 
 // ---------- Build reduced form ----------
-pub fn reduced_form_rat(target: LI, buttons: LLI) -> #(List(List(Rat)), LB) {
+fn reduced_form_rat(target: LI, buttons: LLI) -> #(LLR, LB) {
   let mat0 = build_matrix_rat(target, buttons)
   let height = list.length(target)
   let width = list.length(buttons) + 1
@@ -443,7 +414,7 @@ pub fn reduced_form_rat(target: LI, buttons: LLI) -> #(List(List(Rat)), LB) {
 }
 
 // ---------- Back-substitution and press vector assembly ----------
-pub fn find_lead_rows(mat: List(List(Rat))) -> List(#(Int, Int)) {
+fn find_lead_rows(mat: LLR) -> LR {
   list.index_map(mat, fn(row, r) {
     let lc = leading_col_rat(row)
     case lc {
@@ -454,7 +425,7 @@ pub fn find_lead_rows(mat: List(List(Rat))) -> List(#(Int, Int)) {
   |> list.flatten
 }
 
-pub fn row_for_col(lead_rows: List(#(Int, Int)), col: Int) -> Int {
+fn row_for_col(lead_rows: LR, col: Int) -> Int {
   list.find(lead_rows, fn(pair) { pair.0 == col })
   |> fn(x) {
     case x {
@@ -464,7 +435,7 @@ pub fn row_for_col(lead_rows: List(#(Int, Int)), col: Int) -> Int {
   }
 }
 
-pub fn free_pos(free_ixs: LI, col: Int) -> Int {
+fn free_pos(free_ixs: LI, col: Int) -> Int {
   // returns the index k such that free_ixs[k] == col, or 0 if not found
   list.index_fold(free_ixs, 0, fn(acc, x, i) {
     case acc {
@@ -479,8 +450,8 @@ pub fn free_pos(free_ixs: LI, col: Int) -> Int {
   })
 }
 
-pub fn compute_presses_from_rat(
-  mat: List(List(Rat)),
+fn compute_presses_from_rat(
+  mat: LLR,
   free_cols: LB,
   vars: LI,
 ) -> Result(LI, String) {
@@ -492,15 +463,8 @@ pub fn compute_presses_from_rat(
   let num_buttons = width - 1
 
   // indices of free columns
-  let free_ixs =
-    list.index_map(free_cols, fn(b, i) {
-      case b {
-        True -> [i]
-        False -> []
-      }
-    })
-    |> list.flatten
 
+  let free_ixs = free_indices(free_cols)
   let lead_rows = find_lead_rows(mat)
 
   let presses_res =
@@ -594,7 +558,7 @@ pub fn compute_presses_from_rat(
 }
 
 // ---------- Verification (integer) ----------
-pub fn row_sums_int(buttons: LLI, presses: LI, height: Int) -> LI {
+fn row_sums_int(buttons: LLI, presses: LI, height: Int) -> LI {
   list.range(0, height - 1)
   |> list.map(fn(r) {
     list.index_map(buttons, fn(brows, j) {
@@ -607,7 +571,7 @@ pub fn row_sums_int(buttons: LLI, presses: LI, height: Int) -> LI {
   })
 }
 
-pub fn verify_solution(buttons: LLI, target: LI, presses: LI) -> Bool {
+fn verify_solution(buttons: LLI, target: LI, presses: LI) -> Bool {
   let height = list.length(target)
   let sums = row_sums_int(buttons, presses, height)
   let diffs = list.index_map(sums, fn(s, i) { s - nth_or(target, i, 0) })
@@ -623,167 +587,23 @@ pub fn verify_solution(buttons: LLI, target: LI, presses: LI) -> Bool {
   ok
 }
 
-// ---------- Generate guesses (iterative) ----------
-
-pub fn gen_ranges(max_try: Int) -> LI {
-  list.range(0, max_try)
-}
-
-pub fn gen_guesses(free_count: Int, max_try: Int) -> List(LI) {
-  let base: List(LI) = [[]]
-  list.range(0, free_count - 1)
-  |> list.fold(base, fn(acc, _) {
-    let rng = gen_ranges(max_try)
-    list.index_map(rng, fn(v, _) {
-      list.index_map(acc, fn(t, _) { list.append([v], t) })
-    })
-    |> list.flatten
-  })
-}
-
-// ---------- Minimizer ----------
-pub fn minimize_presses_rat(
-  mat: List(List(Rat)),
-  free_cols: LB,
-  max_try: Int,
-  buttons: LLI,
-  target: LI,
-) -> LI {
-  let free_ixs =
-    list.index_map(free_cols, fn(b, i) {
-      case b {
-        True -> [i]
-        False -> []
-      }
-    })
-    |> list.flatten
-  let free_count = list.length(free_ixs)
-
-  let guesses = gen_guesses(free_count, max_try)
-
-  let best =
-    list.fold(guesses, Error(Nil), fn(acc, guess) {
-      let vars = guess
-      let res = compute_presses_from_rat(mat, free_cols, vars)
-      case res {
-        Ok(presses) -> {
-          let nonneg = list.all(presses, fn(x) { x >= 0 })
-          case nonneg {
-            True -> {
-              let ok = verify_solution(buttons, target, presses)
-              case ok {
-                True -> {
-                  let total = list.fold(presses, 0, fn(acc, x) { acc + x })
-                  case acc {
-                    Ok(#(_best_press, best_sum)) ->
-                      case total < best_sum {
-                        True -> Ok(#(presses, total))
-                        False -> acc
-                      }
-                    Error(_) -> Ok(#(presses, total))
-                  }
-                }
-                False -> acc
-              }
-            }
-            False -> acc
-          }
-        }
-        Error(_) -> acc
-      }
-    })
-
-  case best {
-    Ok(#(presses, _)) -> presses
-    Error(_) -> {
-      echo #("no_valid_solution_found")
-      list.repeat(0, list.length(free_cols))
-    }
-  }
-}
-
-pub fn matrix_inconsistent(mat: List(List(Rat))) -> Bool {
+fn compute_free_bounds(mat: LLR, free_ixs: LI) -> LR {
   let width = case mat {
     [] -> 0
     _ -> list.length(nth_or(mat, 0, []))
-  }
-  list.any(mat, fn(row) {
-    // all coeffs zero but RHS nonzero
-    let all_coeffs_zero =
-      list.range(0, width - 2)
-      |> list.all(fn(j) { rat_is_zero(nth_or(row, j, rat_zero())) })
-    all_coeffs_zero && !rat_is_zero(nth_or(row, width - 1, rat_zero()))
-  })
-}
-
-// ---------- Integer division helpers ----------
-pub fn int_abs(x: Int) -> Int {
-  int.absolute_value(x)
-}
-
-// Floor division (mathematical floor) for integers
-pub fn div_floor(n: Int, d: Int) -> Int {
-  case d == 0 {
-    True -> 0
-    False -> {
-      case n >= 0 && d > 0 || n <= 0 && d < 0 {
-        True -> n / d
-        False -> {
-          // trunc toward zero gave q = n / d; if remainder != 0, subtract 1
-          let q = n / d
-          case n % d == 0 {
-            True -> q
-            False -> q - 1
-          }
-        }
-      }
-    }
-  }
-}
-
-// Ceil division (mathematical ceil) for integers
-pub fn div_ceil(n: Int, d: Int) -> Int {
-  case d == 0 {
-    True -> 0
-    False -> {
-      let f = div_floor(n, d)
-      case f * d == n {
-        True -> f
-        False -> f + 1
-      }
-    }
-  }
-}
-
-pub fn compute_free_bounds(
-  mat: List(List(Rat)),
-  free_ixs: LI,
-) -> List(#(Int, Int)) {
-  let width = case mat {
-    [] -> 0
-    _ -> list.length(nth_or(mat, 0, []))
-  }
-
-  // ceil(|n/d|) = (|n| + |d| - 1) / |d|
-  let ceil_abs = fn(n: Int, d: Int) {
-    let an = int.absolute_value(n)
-    let ad = int.absolute_value(d)
-    case ad == 0 {
-      True -> 0
-      False -> { an + ad - 1 } / ad
-    }
   }
 
   list.index_map(free_ixs, fn(fcol, _) {
-    // per-row estimate: ceil(|rhs / coeff|)
     let estimates =
-      list.map(mat, fn(row) {
-        let #(cn, cd) = rat_to_nd(nth_or(row, fcol, rat_zero()))
-        let #(rn, rd) = rat_to_nd(nth_or(row, width - 1, rat_zero()))
+      list.index_map(mat, fn(_, row_idx) {
+        // pull numerator/denominator for the free column and RHS
+        let #(cn, cd) = get_rat(mat, row_idx, fcol)
+        let #(rn, rd) = get_rat(mat, row_idx, width - 1)
+
         case cn == 0 {
           True -> 0
           False -> {
-            // rhs/coeff = (rn/rd) / (cn/cd) = (rn * cd) / (rd * cn)
+            // compute ceil(|rhs / coeff|)
             let num = rn * cd
             let den = rd * cn
             ceil_abs(num, den)
@@ -791,7 +611,6 @@ pub fn compute_free_bounds(
         }
       })
 
-    // take the largest estimate
     let max_est =
       list.fold(estimates, 0, fn(acc, v) {
         case v > acc {
@@ -800,46 +619,134 @@ pub fn compute_free_bounds(
         }
       })
 
-    // choose upper bound; if all estimates were 0 (e.g., zero RHS),
-    // give a small room to explore
     let cap = 10_000
     let hi_pre = case max_est == 0 {
       True -> 100
       False -> max_est
     }
-    let hi = case hi_pre > cap {
-      True -> cap
-      False -> hi_pre
-    }
-
+    let hi = min_int(hi_pre, cap)
     #(0, hi)
   })
 }
 
-// ---------- Enumerate feasible free-variable tuples with pruning ----------
+// ---------- Incremental congruence DFS ----------
 
-pub fn dfs_enumerate(
-  mat: List(List(Rat)),
+// Build congruence metadata and var-to-congruence index
+
+fn build_cong_index(
+  congrs: List(#(Int, LR, Int)),
+  free_count: Int,
+) -> #(List(TII), LLR) {
+  // congs_meta: #(modulus, rhs, num_coeffs)
+  let congs_meta =
+    list.index_map(congrs, fn(c, _) {
+      let modulus = c.0
+      let coeffs = c.1
+      let rhs = c.2
+      #(modulus, rhs, list.length(coeffs))
+    })
+
+  // initialize empty list per free var
+  let congs_by_var = list.repeat([], free_count)
+
+  // flatten (var_idx, (cong_idx, coeff)) then fold into congs_by_var
+  let pairs =
+    list.index_map(congrs, fn(c, cong_idx) {
+      list.index_map(c.1, fn(p, _) {
+        let var_idx = p.0
+        let coeff_mod = p.1
+        #(var_idx, #(cong_idx, coeff_mod))
+      })
+    })
+    |> list.flatten
+
+  let congs_by_var =
+    list.fold(pairs, congs_by_var, fn(acc, pair) {
+      let var_idx = pair.0
+      let cong_pair = pair.1
+      replace_elem(
+        acc,
+        var_idx,
+        list.append(nth_or(acc, var_idx, []), [cong_pair]),
+      )
+    })
+
+  #(congs_meta, congs_by_var)
+}
+
+fn update_congruences(
+  val: Int,
+  var_idx: Int,
+  congs_meta: List(TII),
+  congs_by_var: LLR,
+  sums: LI,
+  counts: LI,
+) -> #(LI, LI, Bool) {
+  let related = nth_or(congs_by_var, var_idx, [])
+
+  list.fold(related, #(sums, counts, False), fn(acc, pair) {
+    let #(sums_acc, counts_acc, fail_acc) = acc
+
+    case fail_acc {
+      True -> acc
+      False -> {
+        let cong_idx = pair.0
+        let coeff = pair.1
+        let #(modulus, rhs, num_coeffs) =
+          nth_or(congs_meta, cong_idx, #(1, 0, 0))
+
+        let new_sum =
+          { nth_or(sums_acc, cong_idx, 0) + coeff * { val % modulus } }
+          % modulus
+        let new_count = nth_or(counts_acc, cong_idx, 0) + 1
+        let fail_now = new_count == num_coeffs && new_sum != rhs
+
+        #(
+          list.index_map(sums_acc, fn(x, i) {
+            case i == cong_idx {
+              True -> new_sum
+              False -> x
+            }
+          }),
+          list.index_map(counts_acc, fn(x, i) {
+            case i == cong_idx {
+              True -> new_count
+              False -> x
+            }
+          }),
+          fail_now,
+        )
+      }
+    }
+  })
+}
+
+// ---------- DFS / backtracking using the helper ----------
+
+fn dfs_incremental(
+  idx: Int,
+  free_count: Int,
+  ranges: LLI,
+  vars: LI,
+  assigned_sums: LI,
+  assigned_counts: LI,
+  congs_meta: List(TII),
+  congs_by_var: LLR,
+  mat: LLR,
   free_cols: LB,
   buttons: LLI,
   target: LI,
-  ranges: List(List(Int)),
-  free_count: Int,
-  congrs: List(#(Int, List(#(Int, Int)), Int)),
-  idx: Int,
-  partial: LI,
   best: Result(#(LI, Int), String),
 ) -> Result(#(LI, Int), String) {
   case idx == free_count {
     True -> {
-      let res = compute_presses_from_rat(mat, free_cols, partial)
+      // base case: compute full presses and update best
+      let res = compute_presses_from_rat(mat, free_cols, vars)
       case res {
         Ok(presses) -> {
-          let nonneg = list.all(presses, fn(x) { x >= 0 })
-          case nonneg {
+          case list.all(presses, fn(x) { x >= 0 }) {
             True -> {
-              let ok = verify_solution(buttons, target, presses)
-              case ok {
+              case verify_solution(buttons, target, presses) {
                 True -> {
                   let total = list.fold(presses, 0, fn(acc, x) { acc + x })
                   case best {
@@ -862,31 +769,48 @@ pub fn dfs_enumerate(
     }
     False -> {
       let rng = nth_or(ranges, idx, [])
-      list.fold(rng, best, fn(best_acc, v) {
-        let new_partial = list.append(partial, [v])
-        case congruences_hold_partial(congrs, new_partial) {
-          True ->
-            dfs_enumerate(
+      list.fold(rng, best, fn(best_acc, val) {
+        // assign this free var
+        let new_vars = replace_elem(vars, idx, val)
+
+        // update congruences incrementally
+        let #(new_sums, new_counts, fail) =
+          update_congruences(
+            val,
+            idx,
+            congs_meta,
+            congs_by_var,
+            assigned_sums,
+            assigned_counts,
+          )
+
+        case fail {
+          True -> best_acc
+          False ->
+            dfs_incremental(
+              idx + 1,
+              free_count,
+              ranges,
+              new_vars,
+              new_sums,
+              new_counts,
+              congs_meta,
+              congs_by_var,
               mat,
               free_cols,
               buttons,
               target,
-              ranges,
-              free_count,
-              congrs,
-              idx + 1,
-              new_partial,
               best_acc,
             )
-          False -> best_acc
         }
       })
     }
   }
 }
 
-pub fn enumerate_feasible_and_minimize(
-  mat: List(List(Rat)),
+// ---------- Entry point ----------
+fn enumerate_feasible_incremental(
+  mat: LLR,
   free_cols: LB,
   buttons: LLI,
   target: LI,
@@ -914,46 +838,41 @@ pub fn enumerate_feasible_and_minimize(
           let lo = b.0
           let hi = b.1
           let cap = 10_000
-          let hi_capped = case hi - lo > cap {
-            True -> lo + cap
-            False -> hi
-          }
+          let hi_capped = min_int(lo + cap, hi)
           list.range(lo, hi_capped)
         })
 
       let congrs = build_congruences(mat, free_ixs)
-
-      // <<< add your debug echoes here >>>
-      echo #("bounds", bounds)
-      echo #("ranges_len", list.index_map(ranges, fn(r, _) { list.length(r) }))
-      echo #("congruences", congrs)
-      // <<< end debug echoes >>>
+      let #(congs_meta, congs_by_var) = build_cong_index(congrs, free_count)
+      let vars_init = list.repeat(0, free_count)
+      let sums_init = list.repeat(0, list.length(congs_meta))
+      let counts_init = list.repeat(0, list.length(congs_meta))
 
       case
-        dfs_enumerate(
+        dfs_incremental(
+          0,
+          free_count,
+          ranges,
+          vars_init,
+          sums_init,
+          counts_init,
+          congs_meta,
+          congs_by_var,
           mat,
           free_cols,
           buttons,
           target,
-          ranges,
-          free_count,
-          congrs,
-          0,
-          [],
           Error("nil"),
         )
       {
         Ok(#(presses, _)) -> presses
-        Error(_) -> {
-          echo #("no_valid_solution_found")
-          list.repeat(0, list.length(free_cols))
-        }
+        Error(_) -> list.repeat(0, list.length(free_cols))
       }
     }
   }
 }
 
-pub fn parse_input(path: String) -> List(Node) {
+fn parse_input(path: String) -> List(Node) {
   let assert Ok(con) = simplifile.read(path)
 
   con
@@ -984,18 +903,15 @@ fn parse_int_list(s: String) -> LI {
 }
 
 pub fn solution(lst: List(Node)) -> Result(Int, Node) {
-  use acc, x <- list.try_fold(lst, 0)
-  let #(reduced, free_cols) = reduced_form_rat(x.target, x.buttons)
-  echo #("inconsistent?", matrix_inconsistent(reduced))
-  echo #("free_cols", free_cols)
-  echo #("reduced", reduced)
+  use acc, n <- list.try_fold(lst, 0)
+  let #(reduced, free_cols) = reduced_form_rat(n.target, n.buttons)
   let sol =
-    enumerate_feasible_and_minimize(reduced, free_cols, x.buttons, x.target)
+    enumerate_feasible_incremental(reduced, free_cols, n.buttons, n.target)
   let total = list.fold(sol, 0, fn(acc, x) { acc + x })
-  let ok = verify_solution(x.buttons, x.target, sol)
+  let ok = verify_solution(n.buttons, n.target, sol)
   case ok {
     True -> Ok(acc + total)
-    False -> Error(x)
+    False -> Error(n)
   }
 }
 
