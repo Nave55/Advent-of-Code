@@ -574,6 +574,7 @@ fn compute_free_bounds(mat: LLR, free_ixs: LI) -> LR {
       True -> max_est
       False -> 100
     }
+
     let hi = min_int(hi_pre, 200)
     #(0, hi)
   })
