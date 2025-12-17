@@ -274,9 +274,9 @@ fn build_congruences(
     False -> list.length(nth_or(mat, 0, []))
   }
 
-  list.index_map(mat, fn(row, _) {
+  list.map(mat, fn(row) {
     let denoms =
-      list.index_map(free_ixs, fn(fcol, _) { nth_or(row, fcol, rat_zero()).1 })
+      list.map(free_ixs, fn(fcol) { nth_or(row, fcol, rat_zero()).1 })
       |> list.append([nth_or(row, width - 1, rat_zero()).1])
 
     let modulus =
@@ -386,7 +386,7 @@ fn reduce_row_rat(mat: LLR, height: Int, width: Int, row: Int, col: Int) -> LLR 
       False -> {
         let row_i = nth_or(mat1, i, [])
         let factor = nth_or(row_i, col, rat_zero())
-        list.index_map(list.range(0, width - 1), fn(j, _) {
+        list.map(list.range(0, width - 1), fn(j) {
           rat_sub(
             nth_or(row_i, j, rat_zero()),
             rat_mul(factor, nth_or(norm_row, j, rat_zero())),
@@ -619,7 +619,7 @@ fn compute_presses_from_rat(
     }
     Error(_) -> {
       let presses =
-        list.index_map(presses_res, fn(r, _) {
+        list.map(presses_res, fn(r) {
           case r {
             Ok(v) -> v
             Error(_) -> 0
@@ -676,9 +676,9 @@ fn compute_free_bounds(mat: LLR, free_ixs: LI) -> LR {
     _ -> list.length(nth_or(mat, 0, []))
   }
 
-  list.index_map(free_ixs, fn(fcol, _) {
+  list.map(free_ixs, fn(fcol) {
     let max_est =
-      list.index_fold(mat, 0, fn(acc, row, _) {
+      list.fold(mat, 0, fn(acc, row) {
         let #(cn, cd) = nth_or(row, fcol, rat_zero())
         let #(rn, rd) = nth_or(row, width - 1, rat_zero())
         let val = case cn == 0 {
@@ -706,7 +706,7 @@ fn build_cong_index(
   free_count: Int,
 ) -> #(List(TII), LLR) {
   let congs_meta =
-    list.index_map(congrs, fn(c, _) {
+    list.map(congrs, fn(c) {
       let modulus = c.0
       let coeffs = c.1
       let rhs = c.2
@@ -717,7 +717,7 @@ fn build_cong_index(
 
   let pairs =
     list.index_map(congrs, fn(c, cong_idx) {
-      list.index_map(c.1, fn(p, _) {
+      list.map(c.1, fn(p) {
         let var_idx = p.0
         let coeff_mod = p.1
         #(var_idx, #(cong_idx, coeff_mod))
@@ -878,7 +878,7 @@ fn enumerate_feasible_incremental(
     }
     _ -> {
       let ranges =
-        list.index_map(compute_free_bounds(mat, free_ixs), fn(b, _) {
+        list.map(compute_free_bounds(mat, free_ixs), fn(b) {
           let hi_capped = min_int(b.0 + 10_000, b.1)
           list.range(b.0, hi_capped)
         })
