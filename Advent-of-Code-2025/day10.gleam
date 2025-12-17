@@ -167,17 +167,10 @@ fn ceil_abs(n: Int, d: Int) -> Int {
   }
 }
 
-fn min_int(a: Int, b: Int) -> Int {
-  case a < b {
-    True -> a
-    False -> b
-  }
-}
-
 fn free_indices(flags: LB) -> LI {
   list.index_fold(flags, [], fn(acc, b, i) {
     case b {
-      True -> list.append(acc, [i])
+      True -> [i, ..acc]
       False -> acc
     }
   })
@@ -658,7 +651,7 @@ fn verify_solution(
     True -> {
       let sums_str = list.map(sums, int.to_string) |> string.join(", ")
       let targ_str = list.map(target, int.to_string) |> string.join(", ")
-      io.println("Verify Line: " <> string.inspect(number))
+      io.println("Line " <> string.inspect(number) <> ":")
       io.println("  presses:   " <> string.inspect(presses))
       io.println("  computed   [" <> sums_str <> "]")
       io.println("  target:    [" <> targ_str <> "]")
@@ -696,7 +689,7 @@ fn compute_free_bounds(mat: LLR, free_ixs: LI) -> LR {
       False -> 100
     }
 
-    let hi = min_int(hi_pre, 200)
+    let hi = int.min(hi_pre, 200)
     #(0, hi)
   })
 }
@@ -879,7 +872,7 @@ fn enumerate_feasible_incremental(
     _ -> {
       let ranges =
         list.map(compute_free_bounds(mat, free_ixs), fn(b) {
-          let hi_capped = min_int(b.0 + 10_000, b.1)
+          let hi_capped = int.min(b.0 + 10_000, b.1)
           list.range(b.0, hi_capped)
         })
       let congrs = build_congruences(mat, free_ixs)
