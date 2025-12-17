@@ -651,12 +651,12 @@ fn verify_solution(
     True -> {
       let sums_str = list.map(sums, int.to_string) |> string.join(", ")
       let targ_str = list.map(target, int.to_string) |> string.join(", ")
-      io.println("Line " <> string.inspect(number) <> ":")
-      io.println("  presses:   " <> string.inspect(presses))
-      io.println("  computed   [" <> sums_str <> "]")
-      io.println("  target:    [" <> targ_str <> "]")
-      io.println("  diffs:     " <> string.inspect(diffs))
-      io.println("  valid:     " <> string.inspect(ok) <> "\n")
+      io.println("Line " <> string.inspect(number))
+      io.println("  presses:  " <> string.inspect(presses))
+      io.println("  computed: [" <> sums_str <> "]")
+      io.println("  target:   [" <> targ_str <> "]")
+      io.println("  diffs:    " <> string.inspect(diffs))
+      io.println("  valid:    " <> string.inspect(ok) <> "\n")
       ok
     }
     False -> ok
