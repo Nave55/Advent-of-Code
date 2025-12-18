@@ -1,4 +1,3 @@
-import gleam/dict.{type Dict}
 import gleam/int
 import gleam/io
 import gleam/list
@@ -12,14 +11,13 @@ pub type LLI =
   List(LI)
 
 pub type Data {
-  Data(indicator: Int, voltage: Dict(Int, Int), buttons: LLI)
+  Data(indicator: Int, target: LI, buttons: LLI)
 }
 
 pub fn main() {
   let con = parse_input("input/day10.txt")
-  let con2 = parse_input2("input/day10.txt")
   let pt1 = solution1(con) |> int.to_string
-  let assert Ok(pt2) = solution2(con2)
+  let assert Ok(pt2) = solution2(con)
   io.println("Part 1: " <> pt1 <> "\nPart 2: " <> int.to_string(pt2.0))
 }
 
@@ -40,9 +38,13 @@ fn index_to_value(indices: List(Int), n: Int) -> List(Int) {
 
 fn parse_int_list(s: String) -> List(Int) {
   s
-  |> string.slice(1, string.length(s) - 1)
-  |> string.to_graphemes
-  |> list.filter_map(int.parse)
+  |> string.slice(1, string.length(s) - 2)
+  |> fn(x) {
+    case string.length(x) {
+      1 -> string.to_graphemes(x) |> list.filter_map(int.parse)
+      _ -> string.split(x, ",") |> list.filter_map(int.parse)
+    }
+  }
 }
 
 fn parse_indicator(s: String) -> Int {
@@ -70,26 +72,18 @@ fn parse_input(path: String) -> List(Data) {
     let parts = string.split(rest, " ")
     let assert Ok(volt_str) = list.last(parts)
     let button_strs = list.take(parts, list.length(parts) - 1)
-
     let indicator = parse_indicator(indicator_str)
-    let buttons =
-      list.map(button_strs, fn(b) {
-        parse_int_list(b)
-        |> index_to_value(string.length(indicator_str) - 2)
-      })
-
-    let voltage =
-      parse_int_list(volt_str)
-      |> list.index_fold(dict.new(), fn(acc, x, ind) {
-        dict.insert(acc, ind, x)
-      })
+    let buttons = list.map(button_strs, fn(b) { parse_int_list(b) })
+    let voltage = parse_int_list(volt_str)
 
     Data(indicator, voltage, buttons)
   })
 }
 
-fn comb_sets(lst: LLI, curr_comb: Int) -> LLI {
-  list.combinations(lst, curr_comb)
+fn comb_sets(data: Data, curr_comb: Int) -> LLI {
+  data.buttons
+  |> list.map(fn(y) { index_to_value(y, list.length(data.target)) })
+  |> list.combinations(curr_comb)
   |> list.map(list.flatten)
 }
 
@@ -99,7 +93,7 @@ fn xor_all(xs: List(Int)) -> Int {
 
 fn press_buttons(data: Data, max_comb: Int, curr_comb: Int) -> Result(Int, Nil) {
   let found =
-    data.buttons
+    data
     |> comb_sets(curr_comb)
     |> list.any(fn(xs) { xor_all(xs) == data.indicator })
 
@@ -906,30 +900,7 @@ fn enumerate_feasible_incremental(
   }
 }
 
-fn parse_input2(path: String) -> List(Node) {
-  let assert Ok(con) = simplifile.read(path)
-
-  con
-  |> string.trim_end
-  |> string.split("\r\n")
-  |> list.map(fn(line) {
-    let assert Ok(#(_, rest)) = string.split_once(line, " ")
-    let parts = string.split(rest, " ")
-    let assert Ok(volt_str) = list.last(parts)
-    let button_strs = list.take(parts, list.length(parts) - 1)
-    let buttons = list.map(button_strs, parse_int_list)
-
-    let target =
-      volt_str
-      |> string.slice(1, string.length(volt_str) - 2)
-      |> string.split(",")
-      |> list.filter_map(int.parse)
-
-    Node(buttons, target)
-  })
-}
-
-pub fn solution2(lst: List(Node)) -> Result(Rat, Node) {
+pub fn solution2(lst: List(Data)) -> Result(Rat, Data) {
   list.try_fold(lst, #(0, 0), fn(acc, n) {
     let #(ttl, ind) = acc
     let #(re, free) = reduced_form_rat(n.target, n.buttons)
