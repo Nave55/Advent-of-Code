@@ -46,14 +46,14 @@ fn solve(con: LTSI, dial: Int, acc: Int, func: fn(Int, Int, Int) -> Int) -> Int 
     [] -> acc
     [first, ..rest] -> {
       let #(new_dial, crossings) = wrap_number(dial, first.1, first.0)
-      let new_acc = func(new_dial, crossings, acc)
+      let new_acc = func(acc, new_dial, crossings)
       solve(rest, new_dial, new_acc, func)
     }
   }
 }
 
 fn solution1(con: LTSI) -> Int {
-  use new_dial, _, acc <- solve(con, d_start, 0)
+  use acc, new_dial, _ <- solve(con, d_start, 0)
   case new_dial == 0 {
     True -> acc + 1
     False -> acc
@@ -61,6 +61,6 @@ fn solution1(con: LTSI) -> Int {
 }
 
 fn solution2(con: LTSI) -> Int {
-  use _, crossings, acc <- solve(con, d_start, 0)
+  use acc, _, crossings <- solve(con, d_start, 0)
   acc + crossings
 }
