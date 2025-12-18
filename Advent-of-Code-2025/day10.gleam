@@ -39,18 +39,13 @@ fn index_to_value(indices: List(Int), n: Int) -> List(Int) {
 fn parse_int_list(s: String) -> List(Int) {
   s
   |> string.slice(1, string.length(s) - 2)
-  |> fn(x) {
-    case string.length(x) {
-      1 -> string.to_graphemes(x) |> list.filter_map(int.parse)
-      _ -> string.split(x, ",") |> list.filter_map(int.parse)
-    }
-  }
+  |> string.split(",")
+  |> list.filter_map(int.parse)
 }
 
 fn parse_indicator(s: String) -> Int {
-  let len = string.length(s) - 2
   s
-  |> string.slice(1, len)
+  |> string.slice(1, string.length(s) - 2)
   |> string.to_graphemes
   |> list.map(fn(ch) {
     case ch {
