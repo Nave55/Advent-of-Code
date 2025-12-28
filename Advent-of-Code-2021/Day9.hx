@@ -22,13 +22,13 @@ class Day9 {
         ]; 
     }
 
-    static function solution1(arr: AANI) {
+    static function solution1(arr: AAI) {
         var ttl = 0;
         var lows: AV2 = [];
         for (row => rval in arr) {
             for (col => cval in rval) {
                 var tmp = nbrs(arr, {x: row, y: col}).vals;
-                if (tmp.filter(item -> cast(item, Int) > cval).length == tmp.length) {
+                if (tmp.filter(item -> cast(item, Int) ?? 0 > cval).length == tmp.length) {
                     ttl += cval + 1;
                     lows.push({x: row, y: col});
                 }
@@ -39,7 +39,7 @@ class Day9 {
         return {lows: lows, m: m, pt1: ttl};
     }
 
-    static function solution2(arr: AANI, lows: Array<AV2>, m: Array<MSI>) {
+    static function solution2(arr: AAI, lows: Array<AV2>, m: Array<MSI>) {
         if (lows.count(item -> item.empty()) == lows.length) {
             var sol = [for (i in m) i.count()];
             sol.sort((a, b) -> b - a);
@@ -51,7 +51,7 @@ class Day9 {
             for (j in i) {
                 var lowest: Int = fetchVal(arr, j);
                 var n4 = nbrs(arr, j).indices.filter(item -> fetchVal(arr, item) != 9 && 
-                 cast(fetchVal(arr, item), Int) > lowest &&
+                 cast(fetchVal(arr, item), Int) ?? 0 > lowest &&
                  !m[ind].exists(vecToStr(item)));
                  
                 tmp = tmp.concat(n4);
