@@ -18,7 +18,7 @@ class Day9 {
             i
             .trim()
             .split('')
-            .map(item -> parseInt(item))
+            .map(item -> parseInt(item) ?? 0)
         ]; 
     }
 
@@ -35,7 +35,7 @@ class Day9 {
             }
         }
         
-        var m = [for (i in lows) [vecToStr(i) => cast(fetchVal(arr, i), Int)]];
+        var m = [for (i in lows) [vecToStr(i) => fetchVal(arr, i)]];
         return {lows: lows, m: m, pt1: ttl};
     }
 
@@ -51,7 +51,7 @@ class Day9 {
             for (j in i) {
                 var lowest: Int = fetchVal(arr, j);
                 var n4 = nbrs(arr, j).indices.filter(item -> fetchVal(arr, item) != 9 && 
-                 cast(fetchVal(arr, item), Int) ?? 0 > lowest &&
+                 fetchVal(arr, item) > lowest &&
                  !m[ind].exists(vecToStr(item)));
                  
                 tmp = tmp.concat(n4);
