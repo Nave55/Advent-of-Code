@@ -1,4 +1,3 @@
-import StringTools.*;
 import Std.*;
 import Tools;
 
@@ -14,27 +13,33 @@ class Day9 {
     }
 
     static inline function parsefile() {
-        return [for (i in sys.io.File.getContent('Advent Files_2021/Day9.txt').split('\n')) trim(i).split('').map(item -> parseInt(item))]; 
+        return [
+            for (i in sys.io.File.getContent('Advent Files_2021/Day9.txt').split('\n')) 
+            i
+            .trim()
+            .split('')
+            .map(item -> parseInt(item))
+        ]; 
     }
 
     static function solution1(arr: AANI) {
         var ttl = 0;
-        var lows: AAI = [];
+        var lows: AV2 = [];
         for (row => rval in arr) {
             for (col => cval in rval) {
-                var tmp = nbrs(arr, [row, col]).vals;
+                var tmp = nbrs(arr, {x: row, y: col}).vals;
                 if (tmp.filter(item -> cast(item, Int) > cval).length == tmp.length) {
                     ttl += cval + 1;
-                    lows.push([row, col]);
+                    lows.push({x: row, y: col});
                 }
             }
         }
         
-        var m = [for (i in lows) [i.join("") => cast(arrValue(arr, i), Int)]];
+        var m = [for (i in lows) [vecToStr(i) => cast(fetchVal(arr, i), Int)]];
         return {lows: lows, m: m, pt1: ttl};
     }
 
-    static function solution2(arr: AANI, lows: AAAI, m: Array<MSI>) {
+    static function solution2(arr: AANI, lows: Array<AV2>, m: Array<MSI>) {
         if (lows.count(item -> item.empty()) == lows.length) {
             var sol = [for (i in m) i.count()];
             sol.sort((a, b) -> b - a);
@@ -42,14 +47,15 @@ class Day9 {
         } 
 
         for (ind => i in lows) {
-            var tmp: AAI = [];
+            var tmp: AV2 = [];
             for (j in i) {
-                var lowest: Int = arrValue(arr, j);
-                var n4 = nbrs(arr, j).indices.filter(item -> arrValue(arr, item) != 9 && 
-                                                     cast(arrValue(arr, item), Int) > lowest && 
-                                                     !m[ind].exists(item.join("")));
+                var lowest: Int = fetchVal(arr, j);
+                var n4 = nbrs(arr, j).indices.filter(item -> fetchVal(arr, item) != 9 && 
+                 cast(fetchVal(arr, item), Int) > lowest &&
+                 !m[ind].exists(vecToStr(item)));
+                 
                 tmp = tmp.concat(n4);
-                for (vals in n4) m[ind][vals.join("")] = arrValue(arr, vals);
+                for (vals in n4) m[ind][vecToStr(vals)] = fetchVal(arr, vals);
             }
             lows[ind] = tmp;
         }
