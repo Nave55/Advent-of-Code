@@ -1,6 +1,5 @@
 import Std.*;
 import Math.*;
-
 import Tools;
 
 using hx.strings.Strings;
