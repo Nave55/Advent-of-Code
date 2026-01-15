@@ -1,3 +1,5 @@
+package;
+
 import haxe.macro.Type.AnonType;
 import haxe.macro.Expr;
 import haxe.Int64;
@@ -177,6 +179,14 @@ abstract Tup(Vec2) {
       this = s;
     }
 
+    public inline function neg(): Tup {
+        return new Tup({x: -this.x, y: -this.y});
+    }
+
+    public inline function negVec(): Vec2 {
+        return {x: -this.x, y: -this.y};
+    }
+
     @:op(A + B)
     public inline function addVecs(vec: Vec2): Vec2 {
         return {x: this.x + vec.x, y: this.y + vec.y};
@@ -201,21 +211,6 @@ abstract Tup(Vec2) {
     public inline function mulVecByScal(scalar: Int): Vec2 {
         return {x: this.x * scalar, y: this.y * scalar};
     }
-
-    // @:op(A - B)
-    // public inline function subVecs(arr: Array<T>): Array<T> {
-    //     return [for (i in 0...arr.length) this[i] - arr[i]];
-    // }
-
-    // @:op(A * B)
-    // public inline function mulVecs(arr: Array<T>): Array<T> {
-    //     return [for (i in 0...arr.length) this[i] * arr[i]];
-    // }
-
-    // @:op(A * B)
-    // public inline function mulbyScalar(num: Int): Array<T> {
-    //     return [for (i in 0...this.length) this[i] * num];
-    // }
 }
 
 /**
@@ -538,7 +533,6 @@ function arraysEqual<T>(arr1: Array<T>, arr2: Array<T>): Bool {
     return true;
 }
  
-@:generic
 abstract Set<T>(Array<T>) {
     public function new(set: Array<T>) {
         var tmp: Array<T> = [];
@@ -587,11 +581,12 @@ abstract Set<T>(Array<T>) {
         return result;
     }
 
-    @:op(A++)
+    @:op(A--)
     public inline function rtrnArray() {
         return this;
     }
 }
+
 
 /**
  * [Checks if a Vec2 is in bounds given a width and height]
