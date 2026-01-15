@@ -9,8 +9,8 @@ class Day8 {
     static var slopes: MSAV2 = [];
     static var ants: MSAV2 = [];
     static var mat: AAS = [];
-    static inline var HEIGHT: Int = 50;
-    static inline var WIDTH: Int = 50;
+    static final height: Int = 50;
+    static final width: Int = 50;
     
     static function main() {
         parse_file();
@@ -47,46 +47,45 @@ class Day8 {
 
     static function solution() {
         var ttl: Set<String> = new Set([]);
+
+        var insertSet = (pos: Vec2, mat: AAS, symb: String, set: Set<String>) ->
+            if (inBounds(pos, width, height) && fetchVal(mat, pos) != symb) {
+                ttl.push(vecToStr(pos));    
+            }
+
         for (key => value in slopes) {
             for (i in value) {
-                var tup_k = new Tup(strToVec(key));
-                var tup_i = new Tup(i);
-                var symb = fetchVal(mat, strToVec(key));
+                var val = strToVec(key);
+                var symb = fetchVal(mat, val);
+                var tup_k = new Tup(val), tup_i = new Tup(i);
                 var pos = tup_k + i;
                 var neg = tup_k - (tup_i * 2);
 
-                if (inBounds(pos, WIDTH, HEIGHT) && fetchVal(mat, pos) != symb) {
-                    ttl.push(vecToStr(pos));    
-                }
-                if (inBounds(neg, WIDTH, HEIGHT) && fetchVal(mat, neg) != symb) {
-                    ttl.push(vecToStr(neg));    
-                }
+                insertSet(pos, mat, symb, ttl);
+                insertSet(neg, mat, symb, ttl);
             }
         }
-        return ttl++.length;
+        return ttl.rtrnArray().length;
     }
 
     static function solution2() {
         var ttl: Set<String> = new Set([]);
+
+        var walk = (pos: Vec2, step: Tup, set: Set<String>) ->
+            while (true) {
+                pos = step + pos;
+                (inBounds(pos, width, height)) ? ttl.push(vecToStr(pos)) : break;
+            }
+
         for (key => value in slopes) {
             ttl.push((key));
             for (i in value) {
                 var val = strToVec(key);
-                while (true) {
-                    val = new Tup(val) + i;
-                    if (inBounds(val, WIDTH, HEIGHT)) ttl.push(vecToStr(val));
-                    else {
-                        val = strToVec(key);
-                        break;
-                    }
-                }
-                while (true) {
-                    val = new Tup(val) - i;
-                    if (inBounds(val, WIDTH, HEIGHT)) ttl.push(vecToStr(val));
-                    else break;
-                }
+                var step = new Tup(i);
+                walk(val, step, ttl);
+                walk(val, step.neg(), ttl);
             }
         }
-        return ttl++.length;
+        return ttl.rtrnArray().length;
     }
 }
