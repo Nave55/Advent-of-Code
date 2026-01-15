@@ -1,11 +1,7 @@
-import Tables, strformat, strutils, sequtils
+import strformat, strutils, sequtils
 
 type 
-    TI = tuple[x, y: int]
-    # HTSTI = Table[TI, seq[TI]]
-    # HCSTI = Table[char, seq[TI]]
-    # SC = seq[char]
-    # SSC = seq[SC]
+    TI* = tuple[x, y: int]
 
 func `+`* [T](a: seq[T], b: seq[T]): seq[T] =
     var c: seq[T] = @[];
@@ -34,6 +30,9 @@ func tupToStr*(tup: TI): string =
 func strToTup*(str: string): TI =
     let tmp = str.split(",").mapIt(parseInt(it))
     return (tmp[0], tmp[1])
+
+func neg*(tup: TI): TI =
+  return (-tup.x, -tup.y)
 
 type Dirs* = enum
   diags, all, udlr
