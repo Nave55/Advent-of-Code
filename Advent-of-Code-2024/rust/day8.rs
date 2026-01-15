@@ -6,7 +6,7 @@ const HEIGHT: usize = 50;
 
 type Ants = HashMap<char, Vec<Tup>>;
 type Slope = HashMap<Tup, Vec<Tup>>;
-type Mat = [[char; HEIGHT]; WIDTH];
+type Mat = [[char; WIDTH]; HEIGHT];
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Tup {
@@ -24,22 +24,26 @@ fn main() {
 
 fn parse_file() -> (Mat, Ants) {
     let content = std::fs::read_to_string("inputs/day8.txt").expect("Failed to open file");
-    let mut mp: Ants = HashMap::new();
-    let mut arr = [['.'; HEIGHT]; WIDTH];
 
-    for (r_ind, r_val) in content.lines().enumerate() {
-        for (c_ind, c_val) in r_val.chars().enumerate() {
-            arr[r_ind][c_ind] = c_val;
-            if c_val != '.' {
-                mp.entry(c_val).or_insert_with(Vec::new).push(Tup {
-                    x: r_ind as isize,
-                    y: c_ind as isize,
-                });
-            }
-        }
-    }
+    content
+        .lines()
+        .enumerate()
+        .flat_map(|(r, line)| line.chars().enumerate().map(move |(c, ch)| (r, c, ch)))
+        .fold(
+            ([['.'; HEIGHT]; WIDTH], HashMap::<char, Vec<Tup>>::new()),
+            |(mut arr, mut mp), (r, c, ch)| {
+                arr[r][c] = ch;
 
-    (arr, mp)
+                if ch != '.' {
+                    mp.entry(ch).or_default().push(Tup {
+                        x: r as isize,
+                        y: c as isize,
+                    });
+                }
+
+                (arr, mp)
+            },
+        )
 }
 
 impl Add for Tup {
