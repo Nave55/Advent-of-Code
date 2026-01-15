@@ -5,6 +5,10 @@ import datatypes as dt
 const width := 50
 const height := 50
 
+type Ants = map[rune][]t.Vec2[int]
+type Slopes = map[string][]t.Vec2[int]
+type Mat = [][]rune
+
 fn main() {
 	mat, ants := parse_file()
 	slopes := ant_slopes(ants)
@@ -13,10 +17,10 @@ fn main() {
 	println('Part 1: ${pt1}\nPart 2: ${pt2}')
 }
 
-fn parse_file() ([][]rune, map[rune][]t.Vec2[int])  {
+fn parse_file() (Mat, Ants)  {
 	lines := os.read_lines('input/day8.txt') or { panic(err) }
-	mut arr := [][]rune{len: height, cap: height, init: []rune{len: width, cap: width, init: `.`}}
-	mut mp := map[rune][]t.Vec2[int]{}
+	mut arr := Mat{len: height, cap: height, init: []rune{len: width, cap: width, init: `.`}}
+	mut mp := Ants{}
 
 	mut r_ind := 0
 	for r_val in lines {
@@ -32,8 +36,8 @@ fn parse_file() ([][]rune, map[rune][]t.Vec2[int])  {
 	return arr, mp
 }
 
-fn ant_slopes(ants map[rune][]t.Vec2[int]) map[string][]t.Vec2[int] {
-	mut slopes := map[string][]t.Vec2[int]{}
+fn ant_slopes(ants Ants) Slopes {
+	mut slopes := Slopes{}
 
 	for value in ants.values() {
 		for i in 0..value.len - 1 {
@@ -46,7 +50,13 @@ fn ant_slopes(ants map[rune][]t.Vec2[int]) map[string][]t.Vec2[int] {
 	return slopes
 }
 
-fn solution(mat [][]rune, slopes map[string][]t.Vec2[int]) int {
+fn insert_set[T](pos t.Vec2[T], mat Mat, mut set dt.Set[string], symb rune) {
+	if t.in_bounds(pos, height, width) && t.arr_value(mat, pos) != symb {
+		set.add(pos.to_str())
+	}
+}
+
+fn solution(mat Mat, slopes Slopes) int {
 	mut ttl := dt.Set[string]{}
 
 	for key, value in slopes {
@@ -55,43 +65,36 @@ fn solution(mat [][]rune, slopes map[string][]t.Vec2[int]) int {
 			symb := t.arr_value(mat, vec)
 			pos := vec + i
 			neg := vec - (i.mul_by_scalar(2))
-
-			if t.in_bounds(pos, height, width) && t.arr_value(mat, pos) != symb {
-				ttl.add(pos.to_str())
-			}
-			if t.in_bounds(neg, height, width) && t.arr_value(mat, neg) != symb {
-				ttl.add(neg.to_str())
-			}
+			
+			insert_set(pos, mat, mut ttl, symb)
+			insert_set(neg, mat, mut ttl, symb)
 		}
 	}
 
 	return ttl.size()
 }
 
-fn solution2(slopes map[string][]t.Vec2[int]) int {
+fn walk(start t.Vec2[int], step t.Vec2[int], mut acc dt.Set[string]) {
+	mut pos := start
+	for {
+		pos = pos + step
+		if t.in_bounds(pos, height, width) {
+			acc.add(pos.to_str())
+		} else {
+			break
+		}
+	}
+}
+
+fn solution2(slopes Slopes) int {
 	mut ttl := dt.Set[string]{};
 
 	for key, value in slopes {
 		ttl.add(key)
 		for i in value {
-			mut val := t.str_to_vec2[int](key)
-			for {
-				val = val + i
-				if t.in_bounds(val, height, width) {
-					ttl.add(val.to_str())
-				} else {
-					val = t.str_to_vec2[int](key)
-					break
-				}
-			}
-			for {
-				val = val - i
-				if t.in_bounds(val, height, width) {
-					ttl.add(val.to_str())
-				} else {
-					break
-				}
-			}
+			val := t.str_to_vec2[int](key)
+			walk(val, i, mut ttl)
+			walk(val, i.neg(), mut ttl)
 		}
 	}
 
