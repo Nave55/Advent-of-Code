@@ -2,8 +2,8 @@
 use std::convert::TryInto;
 use std::ops::Add;
 
-type Tu = (usize, usize);
-type Ti = (i32, i32);
+pub type Tu = (usize, usize);
+pub type Ti = (i32, i32);
 
 #[derive(Debug)]
 pub enum FileVec {
@@ -61,6 +61,12 @@ pub fn add_tups<T: Add<Output = T>>(a: (T, T), b: (T, T)) -> (T, T) {
 
 pub fn tt_to_tu<T: TryInto<usize>>(pair: (T, T)) -> Option<(usize, usize)> {
     Some((pair.0.try_into().ok()?, pair.1.try_into().ok()?))
+}
+
+pub fn tt_to_ti<T: TryInto<usize>>(pair: (T, T)) -> Option<(i32, i32)> {
+    let a: usize = pair.0.try_into().ok()?;
+    let b: usize = pair.1.try_into().ok()?;
+    Some((a as i32, b as i32))
 }
 
 pub fn dirs_pos<T: Copy>(mat: &[Vec<T>], arr: &[Ti], pos: Ti) -> (Vec<Tu>, Vec<T>) {
