@@ -9,7 +9,7 @@ fn main() {
     println!("Part 1: {pt1}\nPart 2: {pt2}")
 }
 
-fn parse_input(path: &Path) -> Vec<Vec<u32>> {
+fn parse_input(path: &Path) -> Mat {
     fs::read_to_string(path)
         .expect("Failed to read file")
         .lines()
