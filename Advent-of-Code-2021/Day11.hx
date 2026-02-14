@@ -84,8 +84,7 @@ class Day11 {
         while (true) {
             step(con);
             flash(con, [], 0);
-            if (allZeroes(con)) 
-                return ind;
+            if (allZeroes(con)) return ind;
             ind++;
         }
     }
