@@ -62,7 +62,9 @@ class Day11 {
 
     static function allZeroes(con: AAI) {
         for (i in con) {
-            for (j in i) if (j != 0) return false;
+            for (j in i) {
+                if (j != 0) return false;
+            }
         }
 
         return true;
