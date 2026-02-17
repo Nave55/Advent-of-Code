@@ -14,8 +14,7 @@ class Day11 {
     static function parseFile(path: String) { 
         return 
             [for (i in sys.io.File.getContent(path).split('\r\n')) 
-                [for (j in new StringIterator(i)) parseInt(j) ?? 0]
-            ];
+                [for (j in new StringIterator(i)) parseInt(j) ?? 0]];
     }
 
     static function setZero(con: AAI) {
@@ -83,7 +82,6 @@ class Day11 {
     
     static function solution2(con: AAI) {
         var ind = 101;
-
         while (true) {
             step(con);
             flash(con, [], 0);
