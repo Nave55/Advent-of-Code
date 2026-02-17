@@ -28,7 +28,8 @@ class Day11 {
 
     static function step(con: AAI) {
         for (r_ind => r_val in con) {
-            for (c_ind => c_val in r_val) con[r_ind][c_ind]++;
+            for (c_ind => c_val in r_val) 
+                con[r_ind][c_ind]++;
         }
     }
 
@@ -53,8 +54,8 @@ class Day11 {
         }
 
         for (pos in new_flashes) {
-            var n = nbrs(con, pos, all);
-            for (j in n.indices) con[j.x][j.y]++;
+            for (j in nbrs(con, pos, all).indices) 
+                con[j.x][j.y]++;
         }
 
         return flash(con, has_flashed, flash_amt);
