@@ -58,7 +58,6 @@ class Day11 {
                 for (j in nbrs(con, pos, all).indices) 
                     con[j.x][j.y]++;
             }
-
         }
     }
 
