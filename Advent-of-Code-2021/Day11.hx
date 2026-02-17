@@ -32,8 +32,8 @@ class Day11 {
         }
     }
 
-    static function flash(con: AAI, has_flashed: Map<String, {}>, ttl: Int): Int {
-        var flash_amt = ttl;
+    static function flash(con: AAI, has_flashed: Map<String, {}>): Int {
+        var flash_amt = 0;
         var new_flashes: Array<Vec2> = [];
 
         for (r => row in con) {
@@ -49,7 +49,7 @@ class Day11 {
 
         if (new_flashes.length == 0) {
             setZero(con);
-            return flash_amt;
+            return 0;
         }
 
         for (pos in new_flashes) {
@@ -57,7 +57,7 @@ class Day11 {
                 con[j.x][j.y]++;
         }
 
-        return flash(con, has_flashed, flash_amt);
+        return flash_amt + flash(con, has_flashed);
     }
 
     static function allZeroes(con: AAI) {
@@ -74,7 +74,7 @@ class Day11 {
         var sol = 0;
         for (i in 1 ... 101) {
             step(con);
-            sol += flash(con, [], 0);
+            sol += flash(con, []);
         }
         
         return sol;
@@ -84,7 +84,7 @@ class Day11 {
         var ind = 101;
         while (true) {
             step(con);
-            flash(con, [], 0);
+            flash(con, []);
             if (allZeroes(con)) return ind;
             ind++;
         }
