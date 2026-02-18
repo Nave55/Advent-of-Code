@@ -1,7 +1,5 @@
 import Tools;
-
 using hx.strings.Strings;
-using Lambda;
 
 class Day8 {
     static function main() {
@@ -11,7 +9,10 @@ class Day8 {
     }
 
     static inline function parsefile() {
-        var arr = [for (i in sys.io.File.getContent('Advent Files_2021/Day8.txt').split('\n')) i.trim().split("|")];
+        var arr = 
+            [for (i in sys.io.File.getContent('input/day8.txt').split('\r\n')) 
+                i.trim().split("|")];
+
         return [for (i in arr) [for (j in i) j.trim().split(" ")]];
     }
 
@@ -51,7 +52,7 @@ class Day8 {
                 tmp_ttl += Std.string(mp2[alphabetSort(j)]);
             }
 
-            ttl2 += Std.parseInt(tmp_ttl);
+            ttl2 += Std.parseInt(tmp_ttl) ?? 0;
         }
         
         return {ttl: ttl, ttl2: ttl2};
