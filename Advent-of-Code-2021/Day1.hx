@@ -1,7 +1,7 @@
 import Std.parseInt;
 import StringTools.trim;
 
-class Day1 {
+class Day01 {
     static function main() {
         var con = [for (i in sys.io.File.getContent('Advent Files_2021/Day1.txt').split('\n')) parseInt(trim(i))];
         var cnt = 0, cnt1 = 0, csum = 0, psum = 0;
