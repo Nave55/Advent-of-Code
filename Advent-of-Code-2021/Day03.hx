@@ -4,7 +4,7 @@ import Math.*;
 
 using hx.strings.Strings;
 
-class Day3 {
+class Day03 {
     static var first_dig_g = 0;
     static var first_dig_e = 0;
     static function main() {
