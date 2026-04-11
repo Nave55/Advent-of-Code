@@ -1,7 +1,7 @@
 import Tools;
 using hx.strings.Strings;
 
-class Day8 {
+class Day08 {
     static function main() {
         var arr = parsefile();
         var sol = solution(arr);
