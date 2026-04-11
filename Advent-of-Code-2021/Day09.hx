@@ -4,7 +4,7 @@ import Tools;
 using hx.strings.Strings;
 using Lambda;
 
-class Day9 {
+class Day09 {
     static function main() {
         var arr = parsefile();
         var s1 = solution1(arr);
