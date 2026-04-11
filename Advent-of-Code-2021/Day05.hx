@@ -7,7 +7,7 @@ import Tools;
 
 using hx.strings.Strings;
 
-class Day5 {
+class Day05 {
     static function main() {
         var con = parsefile();
         Sys.println('Part 1: ${solution(con,false)}\nPart 2: ${solution(con,true)}');
