@@ -2,7 +2,7 @@ import StringTools.*;
 import Std.*;
 import Math.*;
 
-class Day2 {
+class Day02 {
     static function main() {
         var con = [for (i in sys.io.File.getContent('Advent Files_2021/Day2.txt').split('\n')) trim(i)];
         var horizontal = 0, depth = 0, horizontal1 = 0, depth1 = 0, aim = 0; 
