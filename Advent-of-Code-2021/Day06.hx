@@ -5,7 +5,7 @@ import Tools;
 
 using hx.strings.Strings;
 
-class Day6 {
+class Day06 {
     static function main() {
         var mp = parsefile();
         solution(mp);
