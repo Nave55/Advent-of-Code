@@ -5,7 +5,7 @@ import Tools;
 using hx.strings.Strings;
 using Lambda;
 
-class Day7 {
+class Day07 {
     static function main() {
         var arr = [for (i in sys.io.File.getContent('Advent Files_2021/Day7.txt').split(',')) parseInt(i)];
         solution1(arr);
