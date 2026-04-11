@@ -5,7 +5,7 @@ import Tools;
 
 using hx.strings.Strings;
 
-class Day4 {
+class Day04 {
     static function main() {
         var con:AS = [for (i in sys.io.File.getContent('Advent Files_2021/Day4.txt').split('\n')) trim(i)];
         var nums:AI = [for (i in con[0].split(',')) parseInt(i)];
