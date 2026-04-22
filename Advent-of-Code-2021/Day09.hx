@@ -4,17 +4,18 @@ import Tools;
 using hx.strings.Strings;
 using Lambda;
 
-class Day09 {
+class Day9 {
     static function main() {
         var arr = parsefile();
         var s1 = solution1(arr);
-        var s2 = solution2(arr, [for (i in s1.lows) [i]], s1.m);
+        // trace(s1.lows);
+        var s2 = solution2(arr, s1.lows);
         Sys.println('Part 1: ${s1.pt1}\nPart 2: ${s2}');
     }
 
     static inline function parsefile() {
         return [
-            for (i in sys.io.File.getContent('Advent Files_2021/Day9.txt').split('\n')) 
+            for (i in sys.io.File.getContent('input/day9.txt').split('\n')) 
             i
             .trim()
             .split('')
@@ -39,27 +40,33 @@ class Day09 {
         return {lows: lows, m: m, pt1: ttl};
     }
 
-    static function solution2(arr: AAI, lows: Array<AV2>, m: Array<MSI>) {
-        if (lows.count(item -> item.empty()) == lows.length) {
-            var sol = [for (i in m) i.count()];
-            sol.sort((a, b) -> b - a);
-            return intProd(sol.slice(0, 3));
-        } 
+    static function basinSize(arr: AAI, start: Vec2): Int {
+        var seen: MSI = [];
+        var stack: AV2 = [start];
 
-        for (ind => i in lows) {
-            var tmp: AV2 = [];
-            for (j in i) {
-                var lowest: Int = fetchVal(arr, j);
-                var n4 = nbrs(arr, j).indices.filter(item -> fetchVal(arr, item) != 9 && 
-                 fetchVal(arr, item) > lowest &&
-                 !m[ind].exists(vecToStr(item)));
-                 
-                tmp = tmp.concat(n4);
-                for (vals in n4) m[ind][vecToStr(vals)] = fetchVal(arr, vals);
+        while (stack.length > 0) {
+            var p = stack.pop();
+            var key = vecToStr(p);
+
+            if (seen.exists(key)) continue;
+            var v = fetchVal(arr, p);
+            if (v == 9) continue;
+
+            seen[key] = v;
+            for (n in nbrs(arr, p).indices) {
+                var nv = fetchVal(arr, n);
+                if (nv > v && nv != 9 && !seen.exists(vecToStr(n))) {
+                    stack.push(n);
+                }
             }
-            lows[ind] = tmp;
         }
 
-        return solution2(arr, lows, m);
-    }   
+        return seen.count();
+    }
+
+    static function solution2(arr: AAI, lows: AV2): Int {
+        var sizes = [for (p in lows) basinSize(arr, p)];
+        sizes.sort((a, b) -> b - a);
+        return intProd(sizes.slice(0, 3));
+    }
 }
