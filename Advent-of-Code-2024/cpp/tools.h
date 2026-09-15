@@ -2,38 +2,33 @@
 
 #include <math.h>
 #include <algorithm>
-#include <array>
-#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <ostream>
-#include <ranges>
-#include <span>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
-typedef std::vector<int> vi;
-typedef std::vector<std::vector<int>> vvi;
-typedef std::vector<float> vf;
-typedef std::vector<std::vector<float>> vvf;
-typedef std::vector<std::string> vs;
-typedef std::vector<std::vector<std::string>> vvs;
-typedef std::vector<char> vc;
-typedef std::vector<std::vector<char>> vvc;
-typedef std::pair<int, int> pi;
+using vi = std::vector<int>;
+using vvi = std::vector<std::vector<int>>;
+using vf = std::vector<float>;
+using vvf = std::vector<std::vector<float>>;
+using vs = std::vector<std::string>;
+using vvs = std::vector<std::vector<std::string>>;
+using vc = std::vector<char>;
+using vvc = std::vector<std::vector<char>>;
 
 // Overload << for printing vectors
 template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &arr) {
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& arr) {
   os << "[";
   for (size_t i{0}; i < arr.size(); ++i) {
     os << arr[i];
     if (i < arr.size() - 1) {
-      os << ",";
+      os << ", ";
     }
   }
   os << "]\n";
@@ -42,12 +37,12 @@ std::ostream &operator<<(std::ostream &os, const std::vector<T> &arr) {
 
 // Overload << for printing vectors
 template <typename T, size_t N>
-std::ostream &operator<<(std::ostream &os, const std::array<T, N> &arr) {
+std::ostream& operator<<(std::ostream& os, const std::array<T, N>& arr) {
   os << "[";
   for (size_t i{0}; i < arr.size(); ++i) {
     os << arr[i];
     if (i < arr.size() - 1) {
-      os << ",";
+      os << ", ";
     }
   }
   os << "]\n";
@@ -56,7 +51,7 @@ std::ostream &operator<<(std::ostream &os, const std::array<T, N> &arr) {
 
 // Overload << for printing pairs
 template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::pair<T, T> &pair) {
+std::ostream& operator<<(std::ostream& os, const std::pair<T, T>& pair) {
   os << "[" << pair.first << ", " << pair.second << "]\n";
   return os;
 }
@@ -91,9 +86,9 @@ auto printCArr(const T (&arr)[N]) -> void {
 }
 
 template <typename T>
-float avgVal(const std::vector<T> &arr) {
+float avgVal(const std::vector<T>& arr) {
   if (arr.size() != 0)
-    return (float) std::accumulate(arr.begin(), arr.end(), 0) / arr.size();
+    return (float)std::accumulate(arr.begin(), arr.end(), 0) / arr.size();
   return 0;
 }
 
@@ -103,7 +98,7 @@ float avgVal(const std::vector<T> &arr) {
  * @return The minimum value of the vector, or 0 if the vector is empty
  */
 template <typename T>
-T minVal(const std::vector<T> &arr) {
+T minVal(const std::vector<T>& arr) {
   if (arr.size() != 0) return *std::ranges::min_element(arr);
   return 0;
 }
@@ -114,7 +109,7 @@ T minVal(const std::vector<T> &arr) {
  * @return The maximum value of the vector, or 0 if the vector is empty
  */
 template <typename T>
-T maxVal(const std::vector<T> &arr) {
+T maxVal(const std::vector<T>& arr) {
   if (arr.size() != 0) return *std::ranges::max_element(arr);
   return 0;
 }
@@ -127,7 +122,7 @@ T maxVal(const std::vector<T> &arr) {
  * @return A string with all elements of arr joined together with delim
  */
 template <typename T>
-std::string tJoin(const T &arr, const char delim) {
+std::string tJoin(const T& arr, const char delim) {
   std::string str{""};
   for (size_t i{0}; i < arr.size(); ++i) {
     if (i < arr.size() - 1) {
@@ -145,10 +140,51 @@ std::string tJoin(const T &arr, const char delim) {
  * @param arr The container to join
  * @return A string with all elements of arr joined together
  */
-template <std::ranges::range R>
-std::string tJoin(const R &arr) {
-  return std::string(std::ranges::begin(arr), std::ranges::end(arr));
+template <typename T>
+std::string tJoin(const T& arr) {
+  std::string str{""};
+  for (size_t i{0}; i < arr.size(); ++i) {
+    if (i < arr.size() - 1) {
+      str += arr.at(i);
+    } else
+      str += arr.at(i);
+  }
+  return str;
 }
+
+std::pair<const char*, const char*> splitOnce(
+    const char* str, const char* delim, MemAllocator& alloc = arena_alloc) {
+  const char* d = std::strstr(str, delim);
+  if (!d) return {str, nullptr};
+
+  size_t left_len = d - str;
+  size_t delim_len = std::strlen(delim);
+  const char* right = d + delim_len;
+
+  char* left = static_cast<char*>(alloc.allocate(left_len + 1, alignof(char*)));
+  char* right_copy = static_cast<char*>(
+      alloc.allocate(std::strlen(right) + 1, alignof(char*)));
+
+  std::memcpy(left, str, left_len);
+  left[left_len] = '\0';
+
+  std::strcpy(right_copy, right);
+
+  return {left, right_copy};
+}
+
+/**
+ * @brief Splits a string into a vector of elements of type T based on a given
+ * delimiter.
+ *
+ * @tparam T The type of elements in the returned vector.
+ * @param s The input string to be split.
+ * @param del The delimiter character to split the string on. Default is ','.
+ * @param is_int A boolean flag indicating whether the elements should be
+ * converted to integers. Default is false.
+ * @return A vector of elements of type T obtained by splitting the string s
+ * using the delimiter del.
+ */
 
 /**
  * @brief Splits a string into a vector of elements of type T based on a given
@@ -167,7 +203,7 @@ std::string tJoin(const R &arr) {
  */
 
 template <typename T>
-std::vector<T> tSplit(const std::string &s, const char delim = ',') {
+std::vector<T> tSplit(const std::string& s, const char delim = ',') {
   std::vector<T> result;
   std::istringstream iss(s);
   std::string token;
@@ -193,8 +229,8 @@ std::vector<T> tSplit(const std::string &s, const char delim = ',') {
  */
 
 template <typename T>
-std::pair<T, T> operator+(const std::pair<T, T> &arr,
-                          const std::pair<T, T> &arr2) {
+std::pair<T, T> operator+(const std::pair<T, T>& arr,
+                          const std::pair<T, T>& arr2) {
   return {arr.first + arr2.first, arr.second + arr2.second};
 }
 
@@ -208,8 +244,8 @@ std::pair<T, T> operator+(const std::pair<T, T> &arr,
  */
 
 template <typename T>
-std::pair<T, T> operator-(const std::pair<T, T> &arr,
-                          const std::pair<T, T> &arr2) {
+std::pair<T, T> operator-(const std::pair<T, T>& arr,
+                          const std::pair<T, T>& arr2) {
   return {arr.first - arr2.first, arr.second - arr2.second};
 }
 
@@ -222,7 +258,7 @@ std::pair<T, T> operator-(const std::pair<T, T> &arr,
  * elements of arr and scalar
  */
 template <typename T>
-std::pair<T, T> operator*(const std::pair<T, T> &arr, T scalar) {
+std::pair<T, T> operator*(const std::pair<T, T>& arr, T scalar) {
   return {arr.first * scalar, arr.second * scalar};
 }
 
@@ -235,8 +271,8 @@ std::pair<T, T> operator*(const std::pair<T, T> &arr, T scalar) {
  * elements of arr and arr2
  */
 template <typename T, std::size_t N>
-std::array<T, N> operator+(const std::array<T, N> &arr,
-                           const std::array<T, N> &arr2) {
+std::array<T, N> operator+(const std::array<T, N>& arr,
+                           const std::array<T, N>& arr2) {
   std::array<T, N> result{};
   for (size_t i{0}; i < arr.size(); i++) {
     result[i] = arr[i] + arr2[i];
@@ -254,12 +290,11 @@ std::array<T, N> operator+(const std::array<T, N> &arr,
  */
 
 template <typename T, std::size_t N>
-std::array<T, N> operator+(const std::array<T, N> &arr,
-                           const std::vector<T> &arr2) {
-  assert(arr2.size() >= N);  // optional safety check
-  std::array<T, N> result{};
-  for (size_t i = 0; i < N; ++i) {
-    result[i] = arr[i] + arr2[i];
+std::array<T, N> operator+(const std::array<T, N>& arr,
+                           const std::vector<T>& arr2) {
+  std::vector<T> result{};
+  for (size_t i{0}; i < arr.size(); i++) {
+    result.emplace_back(arr[i] + arr2[i]);
   }
   return result;
 }
@@ -273,8 +308,8 @@ std::array<T, N> operator+(const std::array<T, N> &arr,
  * elements of arr and arr2
  */
 template <typename T>
-std::vector<T> operator+(const std::vector<T> &arr,
-                         const std::vector<T> &arr2) {
+std::vector<T> operator+(const std::vector<T>& arr,
+                         const std::vector<T>& arr2) {
   std::vector<T> result{};
   for (size_t i{0}; i < arr.size(); i++) {
     result.emplace_back(arr[i] + arr2[i]);
@@ -291,13 +326,14 @@ std::vector<T> operator+(const std::vector<T> &arr,
  */
 
 template <typename T>
-T arrValue(std::span<const std::vector<T>> arr,
-           const std::array<int, 2> &arr2) {
+T arrValue(const std::vector<std::vector<T>>& arr,
+           const std::array<int, 2>& arr2) {
   return arr[arr2[0]][arr2[1]];
 }
 
 template <typename T>
-T arrValue(std::span<const std::vector<T>> arr, const pi &arr2) {
+T arrValue(const std::vector<std::vector<T>>& arr,
+           const std::pair<int, int>& arr2) {
   /**
    * @brief Retrieves the value from a 2D vector at a specified row and column
    * index
@@ -318,7 +354,7 @@ T arrValue(std::span<const std::vector<T>> arr, const pi &arr2) {
  * @return The value at the specified row and column index in the 2D array
  */
 template <typename T, size_t N, size_t M>
-T arrValue(const T (&arr)[N][M], const pi &arr2) {
+T arrValue(const T (&arr)[N][M], const std::pair<int, int>& arr2) {
   return arr[arr2.first][arr2.second];
 }
 
@@ -331,20 +367,22 @@ T arrValue(const T (&arr)[N][M], const pi &arr2) {
  * @return The value at the specified row and column index in the 2D array
  */
 template <typename T, size_t N, size_t M>
-T arrValue(std::span<const std::array<T, N>, M> arr, const pi &arr2) {
+T arrValue(const std::array<std::array<T, N>, M>& arr,
+           const std::pair<int, int>& arr2) {
   return arr[arr2.first][arr2.second];
 }
 
-/**
- * @brief Checks if a given pair of indices is within the bounds of a 2D
- * vector
- * @param arr The 2D vector to check against
- * @param pos The pair of indices to check
- * @return true if the indices are within the bounds of the vector, false
- * otherwise
- */
 template <typename T>
-bool inBounds(const std::span<const std::vector<T>> arr, const pi &pos) {
+bool inBounds(const std::vector<std::vector<T>>& arr,
+              const std::pair<int, int>& pos) {
+  /**
+   * @brief Checks if a given pair of indices is within the bounds of a 2D
+   * vector
+   * @param arr The 2D vector to check against
+   * @param pos The pair of indices to check
+   * @return true if the indices are within the bounds of the vector, false
+   * otherwise
+   */
   return (pos.first >= 0 && pos.second >= 0 &&
           static_cast<size_t>(pos.first) < arr.size() &&
           static_cast<size_t>(pos.second) < arr[0].size());
@@ -358,163 +396,74 @@ bool inBounds(const std::span<const std::vector<T>> arr, const pi &pos) {
  * @return true if the indices are within the bounds of the array, false
  * otherwise
  */
-bool inline inBounds(const pi &pos, size_t height, size_t width) {
+
+bool inBounds(const std::pair<int, int>& pos, size_t height, size_t width) {
   return (pos.first >= 0 && pos.second >= 0 &&
           static_cast<size_t>(pos.first) < height &&
           static_cast<size_t>(pos.second) < width);
 }
 
-/**
- * @brief Fills an array with a given value
- * @param value The value to fill the array with
- * @return An array of size N filled with the value
- * @details This function creates an array of size N and fills it with the given
- * value. It is marked as constexpr, meaning it can be evaluated at
- * compile-time.
- */
-template <typename T, std::size_t N>
-constexpr std::array<T, N> filled_array(const T &value) {
-  std::array<T, N> arr{};
-  for (auto &elem : arr) {
-    elem = value;
-  }
-  return arr;
-}
-
 template <typename V, std::size_t N>
 struct Nbrs {
-  std::array<pi, N> indices = filled_array<std::pair<int, int>, N>({0, 0});
-  std::array<V, N> vals = filled_array<V, N>(V{});
-  std::size_t size = 0;
+  std::array<std::pair<int, int>, N> indices;
+  std::array<V, N> vals;
+  std::size_t size = 0;  // To keep track of actual filled elements
 };
-
-/**
- * @brief Returns the neighbors of a given location in a 2D vector
- *
- * This function takes a 2D vector, a location, and a span of pairs representing
- * the offsets to search for neighbors, and returns a struct containing the
- * indices and values of the neighbors.
- *
- * @param mat The 2D vector to search for neighbors
- * @param arr The span of pairs representing the offsets to search for neighbors
- * @param pos The location to search for neighbors
- * @param height The height of the 2D vector
- * @param width The width of the 2D vector
- * @return A struct containing the indices and values of the neighbors
- */
-template <typename V, std::size_t N>
-Nbrs<V, N> get_vals(std::span<const std::vector<V>> mat, std::span<pi> arr,
-                    const pi &pos, size_t height, size_t width) {
-  Nbrs<V, N> result;
-  for (size_t idx = 0; idx < arr.size(); ++idx) {
-    const auto &offset = arr[idx];
-    pi tmp = {pos.first + offset.first, pos.second + offset.second};
-    if (inBounds(tmp, height, width)) {
-      result.indices[result.size] = tmp;
-      result.vals[result.size] = arrValue(mat, tmp);
-      ++result.size;
-    }
-  }
-  return result;
-}
-
-/**
- * @brief Returns the neighbors of a given location in a 2D array
- *
- * This function takes a 2D array, a location, and a span of pairs representing
- * the offsets to search for neighbors, and returns a struct containing the
- * indices and values of the neighbors.
- *
- * @param mat The 2D array to search for neighbors
- * @param arr The span of pairs representing the offsets to search for neighbors
- * @param pos The location to search for neighbors
- * @param height The height of the 2D array
- * @param width The width of the 2D array
- * @return A struct containing the indices and values of the neighbors
- */
-template <typename V, std::size_t N>
-Nbrs<V, N> get_vals(std::span<const std::array<V, N>> mat, std::span<pi> arr,
-                    const pi &pos, size_t height, size_t width) {
-  Nbrs<V, N> result;
-  for (size_t idx = 0; idx < arr.size(); ++idx) {
-    const auto &offset = arr[idx];
-    pi tmp = {pos.first + offset.first, pos.second + offset.second};
-    if (inBounds(tmp, height, width)) {
-      result.indices[result.size] = tmp;
-      result.vals[result.size] = arrValue(mat, tmp);
-      ++result.size;
-    }
-  }
-  return result;
-}
-
-enum class Direction { Udlr, Diags, All };
 
 /**
  * @brief Finds the neighbors of a given location in a 2D vector
  *
- * This function takes a 2D vector, a location, and a direction type, and
- * returns a struct containing the indices and values of the neighbors.
- *
- * @param mat The 2D vector to search for neighbors
- * @param pos The location to search for neighbors
- * @param type The type of neighbors to search for (All, Diags, Udlr)
+ * @param arr The 2D vector to search for neighbors
+ * @param loc The location to search for neighbors
+ * @param type The type of neighbors to search for. 'n' for non-diagonal
+ * neighbors, 'd' for diagonal neighbors, 'a' for all neighbors
  * @return A struct containing the indices and values of the neighbors
  */
 template <typename V, std::size_t N>
-Nbrs<V, N> nbrs(std::span<const std::vector<V>> mat, const pi &pos,
-                Direction type) {
-  assert(!mat.empty() && !mat[0].empty());
-  auto height = mat.size();
-  auto width = mat[0].size();
+Nbrs<V, N> nbrs(const std::vector<std::vector<V>>& arr,
+                const std::pair<int, int>& loc, char type = 'n') {
+  auto height = arr.size();
+  auto width = arr[0].size();
 
-  std::array<pi, 8> all = {
+  std::array<std::pair<int, int>, 8> all = {
       {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}};
-  std::array<pi, 4> diags = {{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}};
-  std::array<pi, 4> lrup = {{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
+  std::array<std::pair<int, int>, 4> diag = {
+      {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}};
+  std::array<std::pair<int, int>, 4> lrup = {
+      {{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
 
   Nbrs<V, N> result;
-  if (type == Direction::All) {
-    result = get_vals<V, N>(mat, all, pos, height, width);
-  } else if (type == Direction::Diags) {
-    result = get_vals<V, N>(mat, diags, pos, height, width);
-  } else if (type == Direction::Udlr) {
-    result = get_vals<V, N>(mat, lrup, pos, height, width);
+
+  if (type == 'n') {
+    for (const auto& i : lrup) {
+      std::pair<int, int> tmp = {loc.first + i.first, loc.second + i.second};
+      if (inBounds(tmp, height, width)) {
+        result.indices[result.size] = tmp;
+        result.vals[result.size] = arrValue(arr, tmp);
+        result.size++;
+      }
+    }
   }
-
-  return result;
-}
-
-/**
- * @brief Finds the neighbors of a given location in a 2D array
- *
- * This function takes a 2D array, a location, and a direction type, and
- * returns a struct containing the indices and values of the neighbors.
- *
- * @param mat The 2D array to search for neighbors
- * @param pos The location to search for neighbors
- * @param type The type of neighbors to search for (All, Diags, Udlr)
- * @return A struct containing the indices and values of the neighbors
- */
-template <typename V, std::size_t N>
-Nbrs<V, N> nbrs(std::span<const std::array<V, N>, N> mat, const pi &pos,
-                Direction type) {
-  assert(!mat.empty() && !mat[0].empty());
-  auto height = mat.size();
-  auto width = mat[0].size();
-
-  std::array<pi, 8> all = {
-      {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}};
-  std::array<pi, 4> diags = {{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}};
-  std::array<pi, 4> lrup = {{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
-
-  Nbrs<V, N> result;
-  if (type == Direction::All) {
-    result = get_vals<V, N>(mat, all, pos, height, width);
-  } else if (type == Direction::Diags) {
-    result = get_vals<V, N>(mat, diags, pos, height, width);
-  } else if (type == Direction::Udlr) {
-    result = get_vals<V, N>(mat, lrup, pos, height, width);
+  if (type == 'd') {
+    for (const auto& i : diag) {
+      std::pair<int, int> tmp = {loc.first + i.first, loc.second + i.second};
+      if (inBounds(tmp, height, width)) {
+        result.indices[result.size] = tmp;
+        result.vals[result.size] = arrValue(arr, tmp);
+        result.size++;
+      }
+    }
+  }
+  if (type == 'a') {
+    for (const auto& i : all) {
+      std::pair<int, int> tmp = {loc.first + i.first, loc.second + i.second};
+      ;
+      if (inBounds(tmp, height, width)) {
+        result.indices[result.size] = tmp;
+        result.vals[result.size] = arrValue(arr, tmp);
+        result.size++;
+      }
+    }
   }
 
   return result;
@@ -526,19 +475,20 @@ Nbrs<V, N> nbrs(std::span<const std::array<V, N>, N> mat, const pi &pos,
  * @return A string representing the pair
  */
 template <typename T>
-auto pairToStr(const std::pair<T, T> &pair) -> std::string {
+auto pairToStr(const std::pair<T, T>& pair) -> std::string {
   return std::to_string(pair.first) + "," + std::to_string(pair.second);
 }
 
-/**
- * @brief Converts a string representation of a pair to a std::pair of type T
- *
- * @tparam T The type of elements in the returned pair
- * @param str The string containing the pair, formatted as "first,second"
- * @return A std::pair with the elements parsed from the string
- */
 template <typename T>
 auto strToPair(std::string str) -> std::pair<T, T> {
+  /**
+   * @brief Converts a string representation of a pair to a std::pair of type T
+   *
+   * @tparam T The type of elements in the returned pair
+   * @param str The string containing the pair, formatted as "first,second"
+   * @return A std::pair with the elements parsed from the string
+   */
+
   std::stringstream ss(str);
   T first, second;
   char delimiter;
@@ -561,7 +511,7 @@ struct pair_hash {
    */
 
   template <class T1, class T2>
-  std::size_t operator()(const std::pair<T1, T2> &pair) const {
+  std::size_t operator()(const std::pair<T1, T2>& pair) const {
     std::size_t h1 = std::hash<T1>()(pair.first);
     std::size_t h2 = std::hash<T2>()(pair.second);
     return h1 ^ (h2 * 31);  // Use a prime multiplier
