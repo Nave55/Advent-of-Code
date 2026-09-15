@@ -1,46 +1,45 @@
+#include "mem/allocators.hpp"
+#include "containers/hash_map.hpp"
+#include "containers/vec.hpp"
 #include "tools.h"
-#include <fstream>
-#include <ranges>
-#include <algorithm>
-#include <unordered_map>
 
-struct Pt1Pt2 {int pt1 {0}; int pt2 {0};};
-auto solution() -> Pt1Pt2;
+Arena arena_alloc(1 * MB);
 
-auto main() -> int {
-    auto [sum1, sum2] =  solution();
-    printf("Part 1: %d\nPart 2: %d\n", sum1, sum2);
+template <typename Parse = std::pair<Vec<int>, Vec<int>>>
+void parseFile(const char* path, const char* delim, Parse& parse) {
+  FILE* file = fopen(path, "r");
+  if (file == NULL) perror("Error opening file");
+
+  char line[32];
+  while (fgets(line, sizeof(line), file) != NULL) {
+    auto [left, right] = splitOnce(line, delim);
+    parse.first.pushBack(atoi(left));
+    parse.second.pushBack(atoi(right));
+  }
+
+  fclose(file);
 }
 
-auto solution() -> Pt1Pt2 {
-    std::ifstream file ("input/day1.txt");
-    assert(file);
-    std::string line;
-    vi left {}, right {};
+void solution() {
+  std::pair pair = {Vec<int>(1000), Vec<int>(1000)};
+  parseFile("day1.txt", "   ", pair);
 
-    while (std::getline(file, line)) {
-        auto tmp = line 
-            | std::views::split(std::string_view("   ")) 
-            | std::views::transform([](auto x) {return std::stoi(std::string(x.begin(), x.end()));}) 
-            | std::ranges::to<std::vector<int>>();
+  pair.first.sort();
+  pair.second.sort();
 
-       
-        left.emplace_back(tmp[0]);
-        right.emplace_back(tmp[1]);
-    }
+  int sum1 = 0, sum2 = 0;
+  HashMap<int, int> map(arena_alloc, 64, 16);
+  for (auto i : pair.first) map.insert(i, 0);
 
-    std::sort(left.begin(), left.end());
-    std::sort(right.begin(), right.end());
+  for (size_t i = 0; i < pair.first.len; i++) {
+    int left = pair.first[i], right = pair.second[i];
+    sum1 += abs(left - right);
+    if (map.contains(right)) sum2 += right;
+  }
 
-    int sum1 {0}, sum2 {0};
-    std::unordered_map<int, int> map {};
+  std::printf("Part 1: %d\nPart 2: %d\n", sum1, sum2);
+}
 
-    for (const auto &i : left) map[i] = 0;
-
-    for (size_t i = 0; i < left.size(); ++i) {
-        sum1 += abs(left[i] - right[i]);
-        if (map.contains(right[i])) sum2 += right[i];
-    }
-
-    return {sum1, sum2};
+int main() {
+  solution();
 }
