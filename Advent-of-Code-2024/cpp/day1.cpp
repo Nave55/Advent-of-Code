@@ -20,7 +20,7 @@ void parseFile(const char* path, const char* delim, Parse& parse) {
   fclose(file);
 }
 
-void solution() {
+int main() {
   std::pair pair = {Vec<int>(1000), Vec<int>(1000)};
   parseFile("day1.txt", "   ", pair);
 
@@ -38,8 +38,4 @@ void solution() {
   }
 
   std::printf("Part 1: %d\nPart 2: %d\n", sum1, sum2);
-}
-
-int main() {
-  solution();
 }
