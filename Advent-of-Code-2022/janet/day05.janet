@@ -25,26 +25,23 @@
         (+= ind 1))
       [inst crates])))
 
+(defn ret [arr arr2 i] (get arr (- (get arr2 i) 1)))
 (defn buffer-reduce [s v] (buffer/push s (get v (- (length v) 1))))
 
 (defn solution [inst crates]
   (loop [i :in inst]
     (loop [j :range [0 (get i 0)]]
-      (let [to (get crates (- (get i 2) 1))
-            from (array/pop (get crates (- (get i 1) 1)))]
-        (array/push to from))))
+      (array/push (ret crates i 2) (array/pop (ret crates i 1)))))
 
   (reduce buffer-reduce @"" crates))
 
 (defn solution2 [inst crates]
-  (loop [i :in inst
-         :let [from @[]]]
+  (loop [i :in inst :let [from @[]]]
     (loop [j :range [0 (get i 0)]]
-      (array/push from (array/pop (get crates (- (get i 1) 1)))))
-
-    (let [from (reverse from)
-          two (get crates (- (get i 2) 1))]
-      (set (crates (- (get i 2) 1)) (array/concat two from))))
+      (array/push from (array/pop (ret crates i 1))))
+    (set
+      (crates (- (get i 2) 1))
+      (array/concat (ret crates i 2) (reverse from))))
 
   (reduce buffer-reduce @"" crates))
 
