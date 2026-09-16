@@ -3,10 +3,8 @@
     (var ind 0)
     (let [inst @[]
           crates @[@[] @[] @[] @[] @[] @[] @[] @[] @[]]]
-
       (loop [raw :iterate (file/read fl :line)
              :let [line (string/trimr raw)]]
-
         (when (< ind 8)
           (def line (string/replace-all "[" "" line))
           (def line (string/replace-all "]" "" line))
@@ -16,7 +14,6 @@
             (def c (string/format "%c" (get line j)))
             (if (not= c "0")
               (array/insert (get crates j) 0 c))))
-
         (when (> ind 9)
           (def line (string/replace-all "move " "" line))
           (def line (string/replace-all " from " "," line))
@@ -32,7 +29,6 @@
   (loop [i :in inst]
     (loop [j :range [0 (get i 0)]]
       (array/push (ret crates i 2) (array/pop (ret crates i 1)))))
-
   (reduce buffer-reduce @"" crates))
 
 (defn solution2 [inst crates]
@@ -42,7 +38,6 @@
     (set
       (crates (- (get i 2) 1))
       (array/concat (ret crates i 2) (reverse from))))
-
   (reduce buffer-reduce @"" crates))
 
 (defn main [&]
