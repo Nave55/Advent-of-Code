@@ -1,7 +1,7 @@
 #include "memory/allocators.hpp"
 #include "containers/hash_map.hpp"
 #include "containers/vec.hpp"
-#include "tools.h"
+#include "tools/cstring_tools.hpp"
 
 Arena arena_alloc(1 * MB);
 
