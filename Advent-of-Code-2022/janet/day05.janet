@@ -1,20 +1,23 @@
+(def preprocess
+  ~{:main (some (+ :four :crate :space :inst))
+    :crate (* "[" (capture :a) "]")
+    :four (replace "    " "0")
+    :space " "
+    :inst (+ (number :d+) 1)})
+
 (defn parse-file [&]
   (with [fl (file/open "input/day5.txt")]
     (var ind 0)
     (let [inst @[]
           crates @[@[] @[] @[] @[] @[] @[] @[] @[] @[]]]
       (loop [raw :iterate (file/read fl :line)
-             :let [line (string/trimr raw)]]
+             :let [line (peg/match preprocess raw)]]
         (when (< ind 8)
-          (let [line (peg/replace-all '(set "[]") "" line)
-                line (string/replace-all "    " "0" line)
-                line (string/replace-all " " "" line)]
-            (loop [j :range [0 (length line)]]
-              (def c (string/format "%c" (get line j)))
-              (if (not= c "0")
-                (array/insert (get crates j) 0 c)))))
-        (when (> ind 9)
-          (array/push inst (peg/match '(any (+ (number :d+) 1)) line)))
+          (loop [j :range [0 (length line)]
+                 :let [c (get line j)]]
+            (if (not= c "0")
+              (array/insert (get crates j) 0 c))))
+        (when (> ind 9) (array/push inst line))
         (+= ind 1))
       [inst crates])))
 
