@@ -6,19 +6,15 @@
       (loop [raw :iterate (file/read fl :line)
              :let [line (string/trimr raw)]]
         (when (< ind 8)
-          (def line (string/replace-all "[" "" line))
-          (def line (string/replace-all "]" "" line))
-          (def line (string/replace-all "    " "0" line))
-          (def line (string/replace-all " " "" line))
-          (loop [j :range [0 (length line)]]
-            (def c (string/format "%c" (get line j)))
-            (if (not= c "0")
-              (array/insert (get crates j) 0 c))))
+          (let [line (peg/replace-all '(set "[]") "" line)
+                line (string/replace-all "    " "0" line)
+                line (string/replace-all " " "" line)]
+            (loop [j :range [0 (length line)]]
+              (def c (string/format "%c" (get line j)))
+              (if (not= c "0")
+                (array/insert (get crates j) 0 c)))))
         (when (> ind 9)
-          (def line (string/replace-all "move " "" line))
-          (def line (string/replace-all " from " "," line))
-          (def line (string/replace-all " to " "," line))
-          (array/push inst (map scan-number (string/split "," line))))
+          (array/push inst (peg/match '(any (+ (number :d+) 1)) line)))
         (+= ind 1))
       [inst crates])))
 
