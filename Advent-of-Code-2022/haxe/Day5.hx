@@ -35,7 +35,7 @@ class Day5 {
                 crates[i[2] - 1].push(crates[i[1] - 1].pop());
             }
         }
-        return [for (i in crates) i[i.length- 1]].join("");
+        return [for (i in crates) i[i.length - 1]].join("");
     }
 
     static function solution2(crates: AAS, instructions: AAI) {
