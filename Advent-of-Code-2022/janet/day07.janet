@@ -5,12 +5,11 @@
     :other (? (* 1))})
 
 (defn parse-file [&]
-  (def arr (string/trimr (slurp "input/day7.txt")))
-  (def mat (peg/match peg arr))
+  (def arr (peg/match peg (slurp "input/day7.txt")))
   (let [dir @[]
         tmp_dir @[]
         dir_names @{}]
-    (loop [i :in mat]
+    (loop [i :in arr]
       (if (= (string/slice i 0 2) "cd")
         (do
           (if (not= (string/slice i 3 4) ".")
