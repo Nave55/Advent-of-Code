@@ -1,7 +1,7 @@
 (def peg
-  ~{:main (split "\r\n" (+ :cdn :file :other))
-    :cdn (* "$ " (capture (* "cd " (to -1))))
-    :file (capture :d+)
+  ~{:main (split "\r\n" (+ :cd :size :other))
+    :cd (* "$ " (capture (* "cd " (to -1))))
+    :size (capture :d+)
     :other (? (* 1))})
 
 (defn parse-file [&]
