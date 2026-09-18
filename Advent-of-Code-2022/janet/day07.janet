@@ -2,7 +2,7 @@
   ~{:main (split "\r\n" (+ :cd :size :other))
     :cd (* "$ " (capture (* "cd " (to -1))))
     :size (capture :d+)
-    :other (? (* 1))})
+    :other (* 1)})
 
 (defn parse-file [&]
   (def arr (peg/match peg (slurp "input/day7.txt")))
