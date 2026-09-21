@@ -19,7 +19,7 @@ void parseFile(const char* path, const char* delim, P& parse) {
 }
 
 int main() {
-  Pair pair = {Vec<int>(1000), Vec<int>(1000)};
+  Pair pair(Vec<int>(1000), Vec<int>(1000));
   parseFile("input/day1.txt", "   ", pair);
 
   pair.x.sort();
