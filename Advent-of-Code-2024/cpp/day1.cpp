@@ -4,15 +4,15 @@
 Arena arena_alloc(1 * MB);
 
 template <typename P = Pair<Vec<int>, Vec<int>>>
-void parseFile(const char* path, const char* delim, P& parse) {
+void parseFile(const char* path, const char* delim, P& pair) {
   FILE* file = fopen(path, "r");
   if (file == NULL) perror("Error opening file");
 
   char line[32];
   while (fgets(line, sizeof(line), file) != NULL) {
     auto [left, right] = splitOnce(line, delim);
-    parse.x.pushBack(atoi(left));
-    parse.y.pushBack(atoi(right));
+    pair.x.pushBack(atoi(left));
+    pair.y.pushBack(atoi(right));
   }
 
   fclose(file);
