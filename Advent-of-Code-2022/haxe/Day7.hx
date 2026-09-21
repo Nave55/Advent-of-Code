@@ -23,7 +23,7 @@ class Day7 {
             }
         }
 
-        var arr_sum:AI = [];
+        var arr_sum: AI = [];
         for (i in uniq_names) {
             var sum = 0;
             for (j in dir) {
