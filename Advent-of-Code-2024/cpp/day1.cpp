@@ -26,8 +26,9 @@ int main() {
   pair.y.sort();
 
   int sum1 = 0, sum2 = 0;
-  HashSet<int> map(arena_alloc, 250);
+  HashSet<int> map(arena_alloc, 1000, 1, 2048);
   for (auto i : pair.x) map.insert(i);
+  std::printf("%zu\n", map.slab_bytes);
 
   for (size_t i = 0; i < pair.x.len; i++) {
     int left = pair.x[i], right = pair.y[i];
