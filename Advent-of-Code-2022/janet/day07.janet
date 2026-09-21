@@ -13,10 +13,10 @@
       (if (= (string/slice i 0 2) "cd")
         (do
           (if (not= (string/slice i 3 4) ".")
-            (array/push tmp_dir (string/slice i 3))
-            (array/pop tmp_dir))
-          (put dir_names (string/join tmp_dir "-") {}))
-
+            (do
+              (array/push tmp_dir (string/slice i 3))
+              (put dir_names (string/join tmp_dir "-") {}))
+            (array/pop tmp_dir)))
         (array/push dir [(string/join tmp_dir "-") (scan-number i)])))
     [dir dir_names]))
 
@@ -36,6 +36,8 @@
                 acc)
               @[]
               (keys dir_names))]
+
+    (each i dir (pp i))
 
     (let [pt1 (sum (filter |(< $ 100_000) ttl))
           f |(>= $ (- (get (sort ttl >) 0) 40_000_000))
