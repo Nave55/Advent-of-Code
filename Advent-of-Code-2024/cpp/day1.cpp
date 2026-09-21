@@ -26,7 +26,7 @@ int main() {
   pair.y.sort();
 
   int sum1 = 0, sum2 = 0;
-  HashSet<int> map(arena_alloc, 64, 16);
+  HashSet<int> map(arena_alloc, 250);
   for (auto i : pair.x) map.insert(i);
 
   for (size_t i = 0; i < pair.x.len; i++) {
