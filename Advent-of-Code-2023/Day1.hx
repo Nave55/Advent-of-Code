@@ -43,8 +43,8 @@ class Day1_2023 {
             }
             
             for (ind => val in names) {
-                mp[i.indexOf(val)] = string(ind+1);
-                mp[i.lastIndexOf(val)] = string(ind+1); 
+                mp[i.indexOf(val)] = string(ind + 1);
+                mp[i.lastIndexOf(val)] = string(ind + 1); 
             }
             
             for (i in mp.keys()) if (i >= 0) arr.push(i);
