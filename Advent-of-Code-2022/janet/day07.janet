@@ -37,8 +37,6 @@
               @[]
               (keys dir_names))]
 
-    (each i dir (pp i))
-
     (let [pt1 (sum (filter |(< $ 100_000) ttl))
           f |(>= $ (- (get (sort ttl >) 0) 40_000_000))
           pt2 (min ;(filter f ttl))]
