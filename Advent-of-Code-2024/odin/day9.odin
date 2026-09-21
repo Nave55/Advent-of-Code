@@ -1,8 +1,6 @@
 package day9
 
 import "core:fmt"
-import "core:mem"
-import vm "core:mem/virtual"
 import "core:os"
 
 file_info :: struct {
@@ -12,15 +10,7 @@ file_info :: struct {
 }
 
 main :: proc() {
-	arena: vm.Arena
-	err := vm.arena_init_static(&arena, 5 * mem.Megabyte)
-	assert(err == .None)
-	arena_allocator := vm.arena_allocator(&arena)
-	context.allocator = arena_allocator
-	defer vm.arena_destroy(&arena)
-
-	data, filled, empty, ok := parse_file("input/day9.txt")
-	assert(ok, "Bad File Path")
+	data, filled, empty := parse_file("input/day9.txt")
 	pt1 := solve(&data)
 	pt2 := solveTwo(&filled, &empty)
 	fmt.printfln("Part 1: %v\nPart 2: %v", pt1, pt2)
@@ -32,10 +22,12 @@ parse_file :: proc(
 	arr: [dynamic]int,
 	filled: [dynamic]file_info,
 	empty: [dynamic]file_info,
-	ok: bool = true,
 ) {
-	data := os.read_entire_file(filepath) or_return
+	data := os.read_entire_file(filepath, context.temp_allocator) or_else panic("Failed to Read File")
 	it := string(data)
+
+	filled = make([dynamic]file_info, context.temp_allocator)
+	empty = make([dynamic]file_info, context.temp_allocator)
 
 	pos, idx := 0, 0
 	for i, ind in it {
@@ -65,12 +57,11 @@ solve :: proc(arr: ^[dynamic]int) -> (ttl: int) {
 		if arr[i] == -1 {
 			for j > i && arr[j] < 0 do j -= 1
 			if j <= i do break
-			arr[i] = arr[j]
-			arr[j] = -1
+			arr[i], arr[j] = arr[j], arr[i]
 		}
-		if arr[i] >= 0 do ttl += i * arr[i] 
+		if arr[i] >= 0 do ttl += i * arr[i]
 	}
-	
+
 	return ttl
 }
 
