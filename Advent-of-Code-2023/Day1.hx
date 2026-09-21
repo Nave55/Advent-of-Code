@@ -4,53 +4,50 @@ import Tools;
 
 using hx.strings.Strings;
 
-class Day1_2023 {
+class Day1 {
     static function main() {
         var con = parsefile();
         var one = solution1(con);
         var two = solution2(con);
-        trace('\nPart 1: $one\nPart 2: $two');
+        Sys.println('Part 1: $one\nPart 2: $two');
     }
 
-    static inline function parsefile() {
-        var con: AS = [for (i in sys.io.File.getContent('Advent Files_2023/Day1.txt').split('\n')) trim(i)];
-        return con;
+    static function parsefile() {
+        return [for (i in sys.io.File.getContent('input/day1.txt').split('\n')) trim(i)];
     }
 
     static function solution1(con: AS): Int {
         var ttl = 0;
         for (i in con) {
             var tmp: AS = [];
-            
             for (j in 0...i.length) {
                 if (i.charAt(j).isDigits()) tmp.push(i.charAt(j));
             }
-            
             ttl += parseInt(tmp[0] + tmp[tmp.length - 1]);
         }
         return ttl;
     }
 
     static function solution2(con: AS): Int {
-        var names = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
-        var ttl = 0;
-        for (i in con) {
-            var mp: MIS = new Map(); 
-            var arr: AI = [];
-            
-            for (j in 0...i.length) {
-                if (i.charAt(j).isDigits() == true) mp[j] = i.charAt(j);
+        final names = [
+            'one'   => 'one1one',
+            'two'   => 'two2two',
+            'three' => 'three3three',
+            'four'  => 'four4four',
+            'five'  => 'five5five',
+            'six'   => 'six6six',
+            'seven' => 'seven7seven',
+            'eight' => 'eight8eight',
+            'nine'  => 'nine9nine',
+        ];
+
+        final con2 = [
+            for (i in con) {
+                for (key => val in names) i = i.replaceAll(key, val);
+                i;
             }
-            
-            for (ind => val in names) {
-                mp[i.indexOf(val)] = string(ind + 1);
-                mp[i.lastIndexOf(val)] = string(ind + 1); 
-            }
-            
-            for (i in mp.keys()) if (i >= 0) arr.push(i);
-            arr.sort((a,b) -> a-b);
-            ttl += parseInt(mp[arr[0]] + mp[arr[arr.length - 1]]);
-        }
-        return ttl;
+        ];
+
+        return solution1(con2);
     }
 }
