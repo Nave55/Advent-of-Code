@@ -3,8 +3,7 @@
 
 Arena arena_alloc(1 * MB);
 
-template <typename P = Pair<Vec<int>, Vec<int>>>
-void parseFile(const char* path, const char* delim, P& pair) {
+void parseFile(const char* path, const char* delim, Pair<Vec<int>, Vec<int>>& pair) {
   FILE* file = fopen(path, "r");
   if (file == NULL) perror("Error opening file");
 
