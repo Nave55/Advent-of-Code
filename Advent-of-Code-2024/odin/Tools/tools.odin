@@ -156,18 +156,13 @@ nbrs :: proc {
 	nbrsSlice,
 }
 
-regexFindAll :: proc(
-	str, pattern: string,
-) -> (
-	arr: [dynamic]string,
-	ok: bool,
-) {
+regexFindAll :: proc(str, pattern: string) -> (arr: [dynamic]string) {
 	re, _ := regex.create(pattern, {}, context.temp_allocator)
 
 	iterator, err := regex.create_iterator(str, pattern)
 	defer regex.destroy_iterator(iterator)
 
-	if err != nil do return arr, false
+	if err != nil do return
 
 	numbers := make([dynamic]int)
 
@@ -176,5 +171,5 @@ regexFindAll :: proc(
 		append(&arr, capture.groups[0])
 	}
 
-	return arr, true
+	return
 }
