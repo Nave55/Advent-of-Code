@@ -17,7 +17,7 @@ solution :: proc(filepath: string) {
 
 	it := string(data)
 	pt1, pt2, mul := 0, 0, true
-	arr, _ := Tools.regexFindAll(it, RE)
+	arr := Tools.regexFindAll(it, RE)
 
 	for i in &arr {
 		if rune(i[0]) == 'd' do mul = i == "do()" ? true : false
