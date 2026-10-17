@@ -156,23 +156,25 @@ nbrs :: proc {
 	nbrsSlice,
 }
 
-regexFind :: proc(
+regexFindAll :: proc(
 	str, pattern: string,
-	slide: int = 1,
 ) -> (
-	arr: [dynamic]regex.Capture,
+	arr: [dynamic]string,
+	ok: bool,
 ) {
-	re, _ := regex.create(pattern, {.No_Optimization}, context.temp_allocator)
+	re, _ := regex.create(pattern, {}, context.temp_allocator)
 
-	ind := 0
-	for ind < len(str) {
-		res, pass := regex.match_and_allocate_capture(re, str[ind:])
-		if pass {
-			ind += res.pos[0][1]
-			append(&arr, res)
-		} else do ind += slide
+	iterator, err := regex.create_iterator(str, pattern)
+	defer regex.destroy_iterator(iterator)
+
+	if err != nil do return arr, false
+
+	numbers := make([dynamic]int)
+
+	for {
+		capture, _ := regex.match_iterator(&iterator) or_break
+		append(&arr, capture.groups[0])
 	}
 
-	return
+	return arr, true
 }
-
