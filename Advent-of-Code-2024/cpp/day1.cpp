@@ -3,13 +3,13 @@
 
 Arena arena_alloc(1 * MB);
 
-void parseFile(const char* path, const char* delim, Pair<Vec<int>, Vec<int>>& pair) {
+void parseFile(const char* path, const char* delim, Pair<Vector<int>, Vector<int>>& pair) {
   FILE* file = fopen(path, "r");
   if (file == NULL) perror("Error opening file");
 
   char line[32];
   while (fgets(line, sizeof(line), file) != NULL) {
-    auto [left, right] = splitOnce(line, delim);
+    auto [left, right] = splitOnce(line, delim, arena_alloc);
     pair.x.pushBack(atoi(left));
     pair.y.pushBack(atoi(right));
   }
@@ -18,14 +18,14 @@ void parseFile(const char* path, const char* delim, Pair<Vec<int>, Vec<int>>& pa
 }
 
 int main() {
-  Pair pair(Vec<int>(1000), Vec<int>(1000));
+  Pair pair(Vector<int>(1000, arena_alloc), Vector<int>(1000, arena_alloc));
   parseFile("input/day1.txt", "   ", pair);
 
   pair.x.sort();
   pair.y.sort();
 
   int sum1 = 0, sum2 = 0;
-  HashSet<int> map(arena_alloc, 1000, 1, 2048);
+  HashSet<int> map(1000, 1, 2048, arena_alloc);
   for (auto i : pair.x) map.insert(i);
 
   for (size_t i = 0; i < pair.x.len; i++) {
