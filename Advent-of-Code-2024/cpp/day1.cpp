@@ -25,13 +25,13 @@ int main() {
   pair.y.sort();
 
   int sum1 = 0, sum2 = 0;
-  HashSet<int> map(1000, 1, 2048, arena_alloc);
-  for (auto i : pair.x) map.insert(i);
+  HashSet<int> set(1000, 1, 2048, arena_alloc);
+  for (auto i : pair.x) set.insert(i);
 
   for (size_t i = 0; i < pair.x.len; i++) {
     int left = pair.x[i], right = pair.y[i];
     sum1 += abs(left - right);
-    if (map.contains(right)) sum2 += right;
+    if (set.contains(right)) sum2 += right;
   }
 
   std::printf("Part 1: %d\nPart 2: %d\n", sum1, sum2);
