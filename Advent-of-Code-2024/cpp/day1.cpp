@@ -1,7 +1,7 @@
 #include "sl/containers/hash_set.hpp"
 #include "sl/tools/cstring_tools.hpp"
 
-Arena arena_alloc(1 * MB);
+Arena_Allocator arena_alloc(1 * MB);
 
 void parseFile(const char* path, const char* delim, Pair<Vector<int>, Vector<int>>& pair) {
   FILE* file = fopen(path, "r");
