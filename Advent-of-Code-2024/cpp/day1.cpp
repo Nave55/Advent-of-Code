@@ -1,9 +1,11 @@
+#include "sl/containers/fixed_vector.hpp"
 #include "sl/containers/hash_set.hpp"
 #include "sl/tools/cstring_tools.hpp"
 
-Arena_Allocator arena_alloc(1 * MB);
+using Pii = Pair<Fixed_Vector<int, 1000>, Fixed_Vector<int, 1000>>;
+Arena_Allocator arena_alloc;
 
-void parseFile(const char* path, const char* delim, Pair<Vector<int>, Vector<int>>& pair) {
+void parseFile(const char* path, const char* delim, Pii& pair) {
   FILE* file = fopen(path, "r");
   if (file == NULL) perror("Error opening file");
 
@@ -18,14 +20,14 @@ void parseFile(const char* path, const char* delim, Pair<Vector<int>, Vector<int
 }
 
 int main() {
-  Pair pair(Vector<int>(1000, arena_alloc), Vector<int>(1000, arena_alloc));
+  Pii pair;
   parseFile("input/day1.txt", "   ", pair);
 
   pair.x.sort();
   pair.y.sort();
 
   int sum1 = 0, sum2 = 0;
-  HashSet<int> set(1000, 1, 2048, arena_alloc);
+  Hash_Set<int> set(1000, 1, 2048, arena_alloc);
   for (auto i : pair.x) set.insert(i);
 
   for (size_t i = 0; i < pair.x.len; i++) {
