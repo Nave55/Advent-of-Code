@@ -2,38 +2,38 @@
 #include "sl/containers/hash_set.hpp"
 #include "sl/tools/cstring_tools.hpp"
 
-using Pii = Pair<Fixed_Vector<int, 1000>, Fixed_Vector<int, 1000>>;
+using Vec = Fixed_Vector<int, 1000>;
 Arena_Allocator arena_alloc;
 
-void parseFile(const char* path, const char* delim, Pii& pair) {
+void parseFile(const char* path, const char* delim, Vec& left, Vec& right) {
   FILE* file = fopen(path, "r");
   if (file == NULL) perror("Error opening file");
 
   char line[32];
   while (fgets(line, sizeof(line), file) != NULL) {
-    auto [left, right] = splitOnce(line, delim, arena_alloc);
-    pair.x.pushBack(atoi(left));
-    pair.y.pushBack(atoi(right));
+    auto [l, r] = splitOnce(line, delim, arena_alloc);
+    left.pushBack(atoi(l));
+    right.pushBack(atoi(r));
   }
 
   fclose(file);
 }
 
 int main() {
-  Pii pair;
-  parseFile("input/day1.txt", "   ", pair);
+  Vec left, right;
+  parseFile("input/day1.txt", "   ", left, right);
 
-  pair.x.sort();
-  pair.y.sort();
+  left.sort();
+  right.sort();
 
   int sum1 = 0, sum2 = 0;
   Hash_Set<int> set(1000, 1, 2048, arena_alloc);
-  for (auto i : pair.x) set.insert(i);
+  for (auto i : left) set.insert(i);
 
-  for (size_t i = 0; i < pair.x.len; i++) {
-    int left = pair.x[i], right = pair.y[i];
-    sum1 += abs(left - right);
-    if (set.contains(right)) sum2 += right;
+  for (size_t i = 0; i < left.len; i++) {
+    int l = left[i], r = right[i];
+    sum1 += abs(l - r);
+    if (set.contains(r)) sum2 += r;
   }
 
   std::printf("Part 1: %d\nPart 2: %d\n", sum1, sum2);
