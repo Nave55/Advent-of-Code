@@ -26,10 +26,10 @@ int main() {
   left.sort();
   right.sort();
 
-  int sum1 = 0, sum2 = 0;
   Hash_Set<int> set(1000, 1, 2048, arena_alloc);
   for (auto i : left) set.insert(i);
 
+  int sum1 = 0, sum2 = 0;
   for (size_t i = 0; i < left.len; i++) {
     int l = left[i], r = right[i];
     sum1 += abs(l - r);
