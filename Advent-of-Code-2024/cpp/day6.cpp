@@ -2,6 +2,9 @@
 #include "sl/containers/hash_set.hpp"
 #include "sl/containers/vec.hpp"
 
+#define ROWS 130
+#define COLS 130
+
 Arena_Allocator arena_allocator;
 
 struct PairHash {
@@ -21,8 +24,6 @@ struct ParseFile {
   Pi start;
 };
 
-#define ROWS 130
-#define COLS 130
 char mat[ROWS][COLS]{{'.'}};
 constexpr Pi dirs[4]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 
@@ -40,7 +41,7 @@ ParseFile parseFile(const char* path) {
       if (line[j] == '#' || line[j] == '^') mat[i][j] = line[j];
       Vec2<int> pair = {i, j};
       if (line[j] == '^') start = pair;
-      if (line[j] == '#') locs.atOrInsert(pair);
+      if (line[j] == '#') locs.insert(pair, 0);
     }
     i++;
   }
