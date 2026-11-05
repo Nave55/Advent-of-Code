@@ -1,104 +1,114 @@
-#include <cassert>
-#include <fstream>
-#include <unordered_map>
-#include <unordered_set>
-#include "tools.h"
+#include "sl/containers/hash_map.hpp"
+#include "sl/containers/hash_set.hpp"
+#include "sl/containers/vec.hpp"
 
-typedef std::pair<int, int> pi;
-typedef std::unordered_map<pi, int, pair_hash> mpi;
-typedef std::unordered_set<pi, pair_hash> spi;
+Arena_Allocator arena_allocator;
 
-struct ParseFile {
-  mpi locs;
-  pi start;
+struct PairHash {
+  std::size_t operator()(const Vec2<int>& p) const noexcept {
+    std::size_t h1 = std::hash<int>{}(p.x);
+    std::size_t h2 = std::hash<int>{}(p.y);
+    return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+  }
 };
 
-constexpr int ROWS = 130;
-constexpr int COLS = 130;
+using Pi = Vec2<int>;
+using Mpi = Hash_Map<Pi, int, PairHash>;
+using Spi = Hash_Set<Pi, PairHash>;
+
+struct ParseFile {
+  Mpi locs;
+  Pi start;
+};
+
+#define ROWS 130
+#define COLS 130
 char mat[ROWS][COLS]{{'.'}};
-const pi dirs[4]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+constexpr Pi dirs[4]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 
-auto parseFile() -> ParseFile {
-  mpi locs;
-  pi start;
+ParseFile parseFile(const char* path) {
+  Mpi locs(845, 1, 2048, arena_allocator);
+  Pi start;
 
-  std::ifstream file("input/day6.txt");
-  assert(file);
-  std::string line;
+  FILE* file = fopen(path, "r");
+  if (file == NULL) perror("Error opening file");
 
-  size_t i{0};
-  while (std::getline(file, line)) {
-    for (size_t j{0}; j < ROWS; ++j) {
+  int i = 0;
+  char line[256];
+  while (fgets(line, sizeof(line), file) != NULL) {
+    for (int j = 0; j < ROWS; j++) {
       if (line[j] == '#' || line[j] == '^') mat[i][j] = line[j];
-      auto pair = std::make_pair(i, j);
+      Vec2<int> pair = {i, j};
       if (line[j] == '^') start = pair;
-      if (line[j] == '#') locs[pair] = 0;
+      if (line[j] == '#') locs.atOrInsert(pair);
     }
-
-    ++i;
+    i++;
   }
 
   return {locs, start};
 }
 
-auto inbounds(const pi &pos) -> bool {
-  return ((pos.first > 0 && pos.first < ROWS - 1) &&
-          (pos.second > 0 && pos.second < COLS - 1));
+bool inbounds(const Pi& pos) {
+  return ((pos.x > 0 && pos.x < ROWS - 1) && (pos.y > 0 && pos.y < COLS - 1));
 }
 
-auto solution(pi pos) -> spi {
-  auto facing = 0;
-  spi visited;
+Spi solution(Pi pos) {
+  size_t facing = 0;
+  Spi visited(1050, 5, 8192, arena_allocator);
 
   while (inbounds(pos)) {
-    auto n_pos = dirs[facing] + pos;
-    if (mat[n_pos.first][n_pos.second] == '#') {
+    Pi n_pos = dirs[facing] + pos;
+    if (mat[n_pos.x][n_pos.y] == '#') {
       facing++;
       facing = facing % 4;
     } else {
-      visited.emplace(pos);
+      visited.insert(pos);
       pos = n_pos;
     }
   }
-  visited.emplace(pos);
+  visited.insert(pos);
 
   return visited;
 }
 
-auto solution2(const pi &start, const mpi &loc, const spi &empty) -> int {
-  auto ttl = 0;
-  auto locs = loc;
+size_t solution2(const Pi& start, const Spi& empty) {
+  Mpi locs(200, 1, 1024, arena_allocator);
+  size_t ttl = 0;
 
-  for (auto &i : empty) {
+  for (auto& i : empty) {
     auto facing = 0;
-    auto pos = start;
-    mat[i.first][i.second] = '#';
-    locs[i] = 0;
+    Pi pos = start;
+    mat[i.x][i.y] = '#';
 
     while (inbounds(pos)) {
-      auto n_pos = dirs[facing] + pos;
-      if (arrValue(mat, n_pos) == '#') {
+      Pi n_pos = dirs[facing] + pos;
+
+      if (mat[n_pos.x][n_pos.y] == '#') {
         facing++;
-        locs[n_pos]++;
-        if (locs[n_pos] == 4) {
-          // std::cout << "Obstacle was at pos " << i << "\n";
+
+        int count = locs.atOrInsert(n_pos)++;
+        if (count == 4) {
           ttl++;
           break;
         }
+
         facing = facing % 4;
-      } else
+      } else {
         pos = n_pos;
+      }
     }
-    mat[i.first][i.second] = '.';
-    locs = loc;
+
+    locs.clear();
+    mat[i.x][i.y] = '.';
   }
+
   return ttl;
 }
 
-auto main() -> int {
-  auto [locs, start] = parseFile();
+int main() {
+  auto [locs, start] = parseFile("input/day6.txt");
 
   auto pt1 = solution(start);
-  auto pt2 = solution2(start, locs, pt1);
-  printf("Part 1: %d\nPart 2: %d\n", (int) pt1.size(), pt2);
+  auto pt2 = solution2(start, pt1);
+  printf("Part 1: %zu\nPart 2: %zu\n", pt1.size(), pt2);
 }
